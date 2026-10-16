@@ -37,9 +37,11 @@
     }
 
     #game-container {
-      position: relative;
-      width: 100vw;
-      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       overflow: hidden;
     }
 
@@ -148,17 +150,19 @@
       to { opacity: 1; transform: translateX(0); }
     }
 
-    /* Overlay Screens */
+    /* Overlay Screens - 100% Fullscreen Edge-to-Edge */
     .overlay-screen {
-      position: absolute;
+      position: fixed;
       inset: 0;
+      width: 100%;
+      height: 100%;
       z-index: 10;
       display: flex;
-      align-items: center;
-      justify-content: center;
-      background: radial-gradient(circle at center, rgba(6, 14, 28, 0.55) 0%, rgba(2, 6, 15, 0.88) 100%);
+      align-items: stretch;
+      justify-content: stretch;
+      background: radial-gradient(circle at center, rgba(6, 14, 28, 0.45) 0%, rgba(2, 6, 15, 0.86) 100%);
       backdrop-filter: blur(4px);
-      padding: 16px;
+      padding: 0;
     }
 
     .hidden {
@@ -166,15 +170,18 @@
     }
 
     .panel-card {
-      width: min(940px, 96vw);
-      max-height: 92vh;
+      width: 100%;
+      height: 100%;
+      max-height: 100%;
       overflow-y: auto;
-      background: var(--bg-panel);
-      border: 1px solid var(--border-glow);
-      border-radius: 12px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-      padding: 24px 28px;
+      background: rgba(6, 12, 24, 0.82);
+      border: none;
+      border-radius: 0;
+      padding: 20px 32px;
       color: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
     }
 
     .title-header {
@@ -619,13 +626,30 @@
       pointer-events: none;
     }
 
-    /* Automatic Landscape Rotation when phone is held vertically */
+    /* Zero-delay CSS + JS Automatic Landscape Rotation ONLY on coarse-pointer phones held vertically */
+    @media (orientation: portrait) and (hover: none) and (pointer: coarse) {
+      #game-container {
+        position: fixed !important;
+        top: 0 !important;
+        left: 100vw !important;
+        width: 100vh !important;
+        width: 100dvh !important;
+        height: 100vw !important;
+        height: 100dvw !important;
+        transform-origin: top left !important;
+        transform: rotate(90deg) !important;
+        overflow: hidden !important;
+      }
+    }
+
     #game-container.force-landscape {
       position: fixed;
       top: 0;
       left: 100vw;
       width: 100vh;
+      width: 100dvh;
       height: 100vw;
+      height: 100dvw;
       transform-origin: top left;
       transform: rotate(90deg);
       overflow: hidden;
@@ -671,9 +695,10 @@
     }
 
     body.mobile-mode .panel-card {
-      padding: 12px 16px;
-      width: 94%;
-      max-height: 90%;
+      padding: 10px 18px;
+      width: 100%;
+      height: 100%;
+      max-height: 100%;
     }
 
     body.mobile-mode .title-header {
@@ -781,17 +806,113 @@
 </head>
 <body>
   <div id="game-container">
-    <canvas id="webgl-canvas"></canvas>
+  <script>
+    (function() {
+      function detectPhone() {
+        var ua = navigator.userAgent || '';
+        if (/Android|iPhone|iPod|Mobile|IEMobile|Opera Mini/i.test(ua)) return true;
+        if (window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse) and (max-width: 920px)').matches) return true;
+        return false;
+      }
+
+      function syncViewportSize() {
+        var container = document.getElementById('game-container');
+        if (!container) return;
+        var vw = window.innerWidth || document.documentElement.clientWidth;
+        var vh = window.innerHeight || document.documentElement.clientHeight;
+        var isPhone = detectPhone();
+        document.body.classList.toggle('mobile-mode', isPhone);
+
+        var forceLandscape = isPhone && (vh > vw);
+        container.classList.toggle('force-landscape', forceLandscape);
+
+        if (forceLandscape) {
+          container.style.position = 'fixed';
+          container.style.top = '0px';
+          container.style.left = vw + 'px';
+          container.style.width = vh + 'px';
+          container.style.height = vw + 'px';
+          container.style.transformOrigin = 'top left';
+          container.style.transform = 'rotate(90deg)';
+        } else {
+          container.style.position = 'fixed';
+          container.style.top = '0px';
+          container.style.left = '0px';
+          container.style.width = vw + 'px';
+          container.style.height = vh + 'px';
+          container.style.transformOrigin = '';
+          container.style.transform = 'none';
+        }
+      }
+
+      function requestAnyFullscreen() {
+        try {
+          var isFs = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+          if (!isFs) {
+            var targets = [document.documentElement, document.body, document.getElementById('game-container')];
+            if (window.frameElement) targets.unshift(window.frameElement);
+            for (var i = 0; i < targets.length; i++) {
+              var el = targets[i];
+              if (!el) continue;
+              var req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+              if (req) {
+                var p = req.call(el, { navigationUI: 'hide' });
+                if (p && p.catch) p.catch(function() {});
+                break;
+              }
+            }
+          }
+          if (detectPhone() && screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('landscape').catch(function() {});
+          }
+        } catch (err) {}
+      }
+
+      function triggerInstantFullscreen(e) {
+        if (e && e.target && e.target.id === 'input-callsign') return;
+        syncViewportSize();
+        requestAnyFullscreen();
+      }
+
+      window.__detectPhone = detectPhone;
+      window.__syncViewportSize = syncViewportSize;
+      window.__triggerInstantFullscreen = triggerInstantFullscreen;
+
+      syncViewportSize();
+      requestAnyFullscreen();
+
+      window.addEventListener('DOMContentLoaded', function() {
+        syncViewportSize();
+        requestAnyFullscreen();
+      });
+      window.addEventListener('load', function() {
+        syncViewportSize();
+        requestAnyFullscreen();
+      });
+      window.addEventListener('resize', syncViewportSize);
+      window.addEventListener('orientationchange', syncViewportSize);
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', syncViewportSize);
+      }
+
+      // Attach non-passive discrete gesture listeners (click, mouseup, touchend, keydown) required by W3C Fullscreen API
+      ['click', 'mouseup', 'touchend', 'keydown'].forEach(function(evt) {
+        window.addEventListener(evt, triggerInstantFullscreen, { capture: true, passive: false });
+      });
+    })();
+  </script>
+  <canvas id="webgl-canvas"></canvas>
     <canvas id="hud-canvas"></canvas>
 
     <!-- Top Quick-Access Bar during flight -->
     <div id="top-controls" class="hidden">
-      <button id="btn-cam" class="hud-mini-btn" title="Shortcut: C">CAM</button>
+      <button id="btn-cam" class="hud-mini-btn" title="Shortcut: C">CAM [C]</button>
       <button id="btn-mouse-aim" class="hud-mini-btn active desktop-only" title="Shortcut: V (Switch Hold-Click vs Free Cursor)">MOUSE: HOLD CLICK [V]</button>
+      <button id="btn-help-hud" class="hud-mini-btn active desktop-only" title="Shortcut: H (Toggle On-Screen PC Controls Guide)">CONTROLS [H]</button>
       <button id="btn-touch-ui" class="hud-mini-btn desktop-only" title="Toggle On-Screen Mobile Touch Buttons">TOUCH PAD</button>
-      <button id="btn-fullscreen" class="hud-mini-btn" title="Full Screen Landscape">⛶ FULL</button>
-      <button id="btn-mute" class="hud-mini-btn" title="Shortcut: M">AUDIO</button>
-      <button id="btn-pause" class="hud-mini-btn" title="Shortcut: Tab or P">SCORE / ❚❚</button>
+      <button id="btn-fullscreen" class="hud-mini-btn" title="Shortcut: F11 / Enter Fullscreen">⛶ FULLSCREEN</button>
+      <button id="btn-mute" class="hud-mini-btn" title="Shortcut: M">AUDIO [M]</button>
+      <button id="btn-pause" class="hud-mini-btn" title="Shortcut: Tab or P">SCORE [TAB]</button>
     </div>
 
     <!-- Mobile & Tablet On-Screen Touch Flight Controls -->
@@ -839,7 +960,10 @@
             <h1>SKY DOMINION // NIGHTFALL</h1>
             <div class="subtitle">Global Free-For-All Arena // 3 Lives Per Run // Hourly Armageddon (:00 IST)</div>
           </div>
-          <div id="lobby-server-status" style="font-size:12px;color:#00ff9d;font-family:monospace;">● MUMBAI-FFA-04 // 12 PILOTS ONLINE // 26ms</div>
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <div id="lobby-server-status" style="font-size:12px;color:#00ff9d;font-family:monospace;">● MUMBAI-FFA-04 // 12 PILOTS ONLINE // 26ms</div>
+            <button id="btn-lobby-fullscreen" class="hud-mini-btn active" style="padding:6px 12px;font-size:11.5px;">⛶ ENTER FULLSCREEN</button>
+          </div>
         </div>
 
         <div class="setup-grid">
@@ -915,18 +1039,20 @@
         </div>
 
         <div class="controls-summary desktop-only">
-          <span class="section-label" style="margin-bottom:6px;">Arena Rules &amp; Controls (Desktop + Mobile Touch)</span>
+          <span class="section-label" style="margin-bottom:8px;">PC Flight &amp; Combat Control Guide (Also Shown In-Flight — Toggle with [H])</span>
           <div class="controls-grid">
-            <div><span class="key-pill">Hold LMB / Drag</span> Fly Toward Cursor</div>
-            <div><span class="key-pill">W / S</span> Increase / Decrease Speed</div>
-            <div><span class="key-pill">A / D</span> Roll Left / Right</div>
-            <div><span class="key-pill">F</span> Fire 20mm Cannon Bullets</div>
-            <div><span class="key-pill">Space</span> Fire Homing Missile</div>
-            <div><span class="key-pill">X</span> Deploy IR/Radar Flares</div>
-            <div><span class="key-pill">R</span> Cycle Nearest Target</div>
-            <div><span class="key-pill">C</span> Chase / Cockpit View</div>
-            <div><span class="key-pill">Tab</span> Live Leaderboard</div>
-            <div><span class="key-pill">Neon Orbs</span> +HP &amp; +Score</div>
+            <div><span class="key-pill">Hold Left-Click + Move</span> Point &amp; Steer Fighter</div>
+            <div><span class="key-pill">V</span> Switch Hold-Click vs Free Mouse</div>
+            <div><span class="key-pill">W / S</span> Throttle Up (Afterburner) / Brake</div>
+            <div><span class="key-pill">A / D</span> Bank / Roll Left &amp; Right</div>
+            <div><span class="key-pill">F</span> Fire 20mm Vulcan Cannon</div>
+            <div><span class="key-pill">Space / R-Click</span> Launch Homing Missile (When Locked)</div>
+            <div><span class="key-pill">X</span> Deploy Countermeasure Flares</div>
+            <div><span class="key-pill">R</span> Lock Nearest Enemy Target</div>
+            <div><span class="key-pill">C</span> Toggle Chase / Cockpit HUD View</div>
+            <div><span class="key-pill">Tab / P</span> Live Server Leaderboard &amp; Pause</div>
+            <div><span class="key-pill">H</span> Show / Hide In-Flight Control Guide</div>
+            <div><span class="key-pill">M</span> Mute / Unmute Audio</div>
           </div>
         </div>
 
@@ -1504,9 +1630,10 @@
       this.invertPitchWS = false;
       this.mouseButtons = { left: false, right: false };
 
-      // Mobile / Touch state
-      this.isTouchDevice = Boolean('ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth < 820);
+      // Mobile / Touch state (Strictly actual phones/tablets so PCs always show PC HUD & Controls Guide)
+      this.isTouchDevice = Boolean(window.__detectPhone ? window.__detectPhone() : false);
       this.touchUIVisible = this.isTouchDevice;
+      this.showPcControlsGuide = true;
       this.steerTouchId = null;
       this.touchScoring = false;
       this.touchHold = {
@@ -3908,6 +4035,47 @@
         ctx.fillText(`GUN  ${String(ac.ammo).padStart(3, '0')} / ${CONFIG.WEAPONS.CANNON.maxAmmo} [F]`, px + 10, py + 88);
         ctx.fillText(`MSL  ${ac.missiles} / ${CONFIG.WEAPONS.MISSILE.maxCount} ${ac.missileCooldown > 0 ? '(RELOAD)' : '[SPACE]'}`, px + 10, py + 106);
         ctx.fillText(`FLR  ${ac.flares} / ${CONFIG.WEAPONS.FLARE.maxCount} [X]`, px + 10, py + 124);
+
+        // On-Screen PC Controls Guide Card (Top-Left below Leaderboard, toggle with [H])
+        if (!input || input.showPcControlsGuide !== false) {
+          const gx = 12;
+          const gy = 204;
+          const gw = 220;
+          const gh = 178;
+          ctx.fillStyle = 'rgba(5, 12, 24, 0.80)';
+          ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+          ctx.lineWidth = 1.3;
+          ctx.fillRect(gx, gy, gw, gh);
+          ctx.strokeRect(gx, gy, gw, gh);
+
+          ctx.fillStyle = '#38bdf8';
+          ctx.font = 'bold 11px Consolas, monospace';
+          ctx.fillText('PC CONTROLS GUIDE [H: HIDE]', gx + 8, gy + 16);
+
+          ctx.fillStyle = '#e2e8f0';
+          ctx.font = '10.5px Consolas, monospace';
+          const guideLines = [
+            ['Hold LMB+Move', 'Steer Nose'],
+            ['[V] Key',       input && input.freeMouseSteer ? 'Mode: Free Mouse' : 'Mode: Hold Click'],
+            ['[W] / [S]',     'Speed Up / Brake'],
+            ['[A] / [D]',     'Roll Left / Right'],
+            ['[F] Hold',      'Fire 20mm Cannon'],
+            ['[Space/RClick]','Fire Missile'],
+            ['[X] Key',       'Deploy Flares'],
+            ['[R] / [C]',     'Target / Cam View'],
+            ['[Tab] / [P]',   'Leaderboard/Pause']
+          ];
+          let ly = gy + 34;
+          for (let i = 0; i < guideLines.length; i++) {
+            ctx.fillStyle = '#00ff9d';
+            ctx.fillText(guideLines[i][0], gx + 8, ly);
+            ctx.fillStyle = '#cbd5e1';
+            ctx.textAlign = 'right';
+            ctx.fillText(guideLines[i][1], gx + gw - 8, ly);
+            ctx.textAlign = 'left';
+            ly += 15.5;
+          }
+        }
       }
 
       // 3. Target Box, Lead Indicator Pipper, Lock-On Progress & Off-Screen Arrows
@@ -4382,21 +4550,35 @@
       };
       btnTouchUI.addEventListener('click', () => syncTouchUI(!this.input.touchUIVisible));
       btnTouchUI.classList.toggle('active', this.input.touchUIVisible);
-      document.getElementById('btn-fullscreen').addEventListener('click', () => {
+      const triggerFsNow = () => {
+        if (window.__triggerInstantFullscreen) window.__triggerInstantFullscreen();
         this.input.requestMobileFullscreenAndLandscape();
-        setTimeout(() => this.handleResize(), 150);
-      });
+        this.handleResize();
+      };
+      document.getElementById('btn-fullscreen').addEventListener('click', triggerFsNow);
+      const lobbyFsBtn = document.getElementById('btn-lobby-fullscreen');
+      if (lobbyFsBtn) lobbyFsBtn.addEventListener('click', triggerFsNow);
+
+      const helpBtn = document.getElementById('btn-help-hud');
+      if (helpBtn) {
+        helpBtn.addEventListener('click', () => {
+          this.input.showPcControlsGuide = !this.input.showPcControlsGuide;
+          helpBtn.classList.toggle('active', this.input.showPcControlsGuide);
+        });
+      }
       document.getElementById('btn-mute').addEventListener('click', () => this.toggleMute());
       document.getElementById('btn-pause').addEventListener('click', () => this.setPaused(this.state !== 'PAUSED'));
 
       document.getElementById('btn-launch').addEventListener('click', () => {
         this.audio.init();
-        if (this.input.isTouchDevice) {
-          this.input.requestMobileFullscreenAndLandscape();
-        }
+        this.input.requestMobileFullscreenAndLandscape();
         this.startMatch();
-        setTimeout(() => this.handleResize(), 150);
+        this.handleResize();
       });
+
+      window.addEventListener('fullscreenchange', () => this.handleResize());
+      window.addEventListener('webkitfullscreenchange', () => this.handleResize());
+      window.addEventListener('orientationchange', () => this.handleResize());
       document.getElementById('btn-resume').addEventListener('click', () => this.setPaused(false));
       document.getElementById('btn-restart').addEventListener('click', () => this.redeployPlayerRun());
       document.getElementById('btn-return-menu').addEventListener('click', () => this.returnToMenu());
@@ -4946,16 +5128,15 @@
     }
 
     handleResize() {
-      const isTouch = Boolean('ontouchstart' in window || navigator.maxTouchPoints > 0 || Math.min(window.innerWidth, window.innerHeight) < 820);
-      this.input.isTouchDevice = isTouch;
-      document.body.classList.toggle('mobile-mode', isTouch);
+      if (window.__syncViewportSize) window.__syncViewportSize();
+      const vw = window.innerWidth || document.documentElement.clientWidth;
+      const vh = window.innerHeight || document.documentElement.clientHeight;
+      const isPhone = Boolean(window.__detectPhone ? window.__detectPhone() : false);
+      this.input.isTouchDevice = isPhone;
 
-      const container = document.getElementById('game-container');
-      const forceLandscape = isTouch && (window.innerHeight > window.innerWidth);
-      container.classList.toggle('force-landscape', forceLandscape);
-
-      const w = forceLandscape ? window.innerHeight : window.innerWidth;
-      const h = forceLandscape ? window.innerWidth : window.innerHeight;
+      const forceLandscape = isPhone && (vh > vw);
+      const w = Math.max(1, forceLandscape ? vh : vw);
+      const h = Math.max(1, forceLandscape ? vw : vh);
       this.renderer.setSize(w, h);
       this.camera.aspect = w / h;
       this.camera.updateProjectionMatrix();
@@ -4973,6 +5154,11 @@
 
       if (this.input.consumePressed('KeyM')) this.toggleMute();
       if (this.input.consumePressed('KeyV')) this.toggleMouseSteer();
+      if (this.input.consumePressed('KeyH')) {
+        this.input.showPcControlsGuide = !this.input.showPcControlsGuide;
+        const helpBtn = document.getElementById('btn-help-hud');
+        if (helpBtn) helpBtn.classList.toggle('active', this.input.showPcControlsGuide);
+      }
       if (this.input.consumePressed('KeyP') || this.input.consumePressed('Escape')) {
         if (this.state === 'PLAYING' || this.state === 'PAUSED') {
           this.setPaused(this.state !== 'PAUSED');
