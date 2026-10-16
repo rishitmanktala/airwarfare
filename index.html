@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <title>SKY DOMINION // 3D Tactical Air Combat Simulator</title>
   <!-- Pinned Three.js r128 from cdnjs -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -617,35 +619,113 @@
       pointer-events: none;
     }
 
-    @media (max-width: 680px) {
-      #top-controls {
-        top: 6px;
-        padding: 4px 6px;
-        gap: 4px;
-        width: 96vw;
-        justify-content: center;
-        flex-wrap: wrap;
-      }
-      .hud-mini-btn {
-        padding: 3px 6px;
-        font-size: 9.5px;
-      }
-      #feed-container {
-        top: 44px;
-        right: 8px;
-        width: 210px;
-        max-width: 58vw;
-      }
-      .feed-item {
-        font-size: 10px;
-        padding: 3px 7px;
-      }
-      .panel-card {
-        padding: 16px 14px;
-      }
-      .aircraft-cards {
-        grid-template-columns: 1fr;
-      }
+    /* Automatic Landscape Rotation when phone is held vertically */
+    #game-container.force-landscape {
+      position: fixed;
+      top: 0;
+      left: 100vw;
+      width: 100vh;
+      height: 100vw;
+      transform-origin: top left;
+      transform: rotate(90deg);
+      overflow: hidden;
+    }
+
+    /* Decluttered Mobile Landscape Mode */
+    body.mobile-mode .desktop-only {
+      display: none !important;
+    }
+
+    body.mobile-mode #top-controls {
+      top: 8px;
+      right: 12px;
+      left: auto;
+      transform: none;
+      padding: 3px 6px;
+      gap: 5px;
+      background: rgba(6, 12, 24, 0.58);
+    }
+
+    body.mobile-mode .hud-mini-btn {
+      padding: 4px 8px;
+      font-size: 10px;
+    }
+
+    body.mobile-mode #feed-container {
+      top: 38px;
+      left: 50%;
+      right: auto;
+      transform: translateX(-50%);
+      width: auto;
+      max-width: 66%;
+      align-items: center;
+    }
+
+    body.mobile-mode .feed-item {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-right: none;
+      border-bottom: 2px solid var(--hud-cyan);
+      border-radius: 4px;
+      background: rgba(6, 13, 25, 0.65);
+    }
+
+    body.mobile-mode .panel-card {
+      padding: 12px 16px;
+      width: 94%;
+      max-height: 90%;
+    }
+
+    body.mobile-mode .title-header {
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+    }
+
+    body.mobile-mode .title-header h1 {
+      font-size: 18px;
+    }
+
+    body.mobile-mode .setup-grid {
+      grid-template-columns: 1.2fr 1fr;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    body.mobile-mode .ac-desc {
+      display: none;
+    }
+
+    body.mobile-mode .aircraft-card {
+      padding: 9px 10px;
+    }
+
+    body.mobile-mode .ac-name {
+      font-size: 14px;
+    }
+
+    body.mobile-mode .option-group {
+      margin-bottom: 10px;
+    }
+
+    body.mobile-mode .primary-btn {
+      padding: 10px 22px;
+      font-size: 13px;
+    }
+
+    body.mobile-mode .touch-cluster-left {
+      left: 14px;
+      bottom: 12px;
+      grid-template-columns: repeat(2, 64px);
+      grid-template-rows: repeat(2, 50px);
+      gap: 7px;
+    }
+
+    body.mobile-mode .touch-cluster-right {
+      right: 14px;
+      bottom: 12px;
+      grid-template-columns: repeat(2, 74px);
+      grid-template-rows: 58px 46px;
+      gap: 7px;
     }
 
     .callsign-input {
@@ -706,16 +786,17 @@
 
     <!-- Top Quick-Access Bar during flight -->
     <div id="top-controls" class="hidden">
-      <button id="btn-cam" class="hud-mini-btn" title="Shortcut: C">CAM: CHASE [C]</button>
-      <button id="btn-mouse-aim" class="hud-mini-btn active" title="Shortcut: V (Switch Hold-Click vs Free Cursor)">MOUSE: HOLD CLICK [V]</button>
-      <button id="btn-touch-ui" class="hud-mini-btn" title="Toggle On-Screen Mobile Touch Buttons">TOUCH PAD</button>
-      <button id="btn-mute" class="hud-mini-btn" title="Shortcut: M">AUDIO: ON [M]</button>
-      <button id="btn-pause" class="hud-mini-btn" title="Shortcut: Tab or P">PAUSE / SCORE [TAB]</button>
+      <button id="btn-cam" class="hud-mini-btn" title="Shortcut: C">CAM</button>
+      <button id="btn-mouse-aim" class="hud-mini-btn active desktop-only" title="Shortcut: V (Switch Hold-Click vs Free Cursor)">MOUSE: HOLD CLICK [V]</button>
+      <button id="btn-touch-ui" class="hud-mini-btn desktop-only" title="Toggle On-Screen Mobile Touch Buttons">TOUCH PAD</button>
+      <button id="btn-fullscreen" class="hud-mini-btn" title="Full Screen Landscape">⛶ FULL</button>
+      <button id="btn-mute" class="hud-mini-btn" title="Shortcut: M">AUDIO</button>
+      <button id="btn-pause" class="hud-mini-btn" title="Shortcut: Tab or P">SCORE / ❚❚</button>
     </div>
 
     <!-- Mobile & Tablet On-Screen Touch Flight Controls -->
     <div id="touch-controls" class="hidden">
-      <div id="touch-steer-hint">DRAG SKY TO STEER FIGHTER</div>
+      <div id="touch-steer-hint" class="hidden">DRAG SKY TO STEER FIGHTER</div>
       <div class="touch-cluster-left">
         <button id="tbtn-spd-up" class="touch-btn">SPD +<span>THROTTLE W</span></button>
         <button id="tbtn-spd-dn" class="touch-btn">SPD -<span>BRAKE S</span></button>
@@ -823,7 +904,7 @@
               </div>
             </div>
 
-            <div class="option-group" style="margin-bottom:0;">
+            <div class="option-group desktop-only" style="margin-bottom:0;">
               <span class="section-label">4. Mouse Point &amp; Fly Mode</span>
               <div class="btn-row" style="grid-template-columns: 1fr 1fr;">
                 <button id="opt-mouse-hold" class="opt-btn active">Hold Click<span>Steer While Holding LMB</span></button>
@@ -833,7 +914,7 @@
           </div>
         </div>
 
-        <div class="controls-summary">
+        <div class="controls-summary desktop-only">
           <span class="section-label" style="margin-bottom:6px;">Arena Rules &amp; Controls (Desktop + Mobile Touch)</span>
           <div class="controls-grid">
             <div><span class="key-pill">Hold LMB / Drag</span> Fly Toward Cursor</div>
@@ -1450,19 +1531,43 @@
         this.keys[e.code] = false;
       });
 
+      this.isForcedLandscape = () => {
+        return Boolean(this.isTouchDevice && window.innerHeight > window.innerWidth);
+      };
+
+      this.requestMobileFullscreenAndLandscape = () => {
+        try {
+          const docEl = document.documentElement;
+          if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+            if (docEl.requestFullscreen) {
+              docEl.requestFullscreen().catch(() => {});
+            } else if (docEl.webkitRequestFullscreen) {
+              docEl.webkitRequestFullscreen();
+            }
+          }
+          if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('landscape').catch(() => {});
+          }
+        } catch (err) {}
+      };
+
       const updatePointerCoords = (clientX, clientY) => {
-        this.mouseScreenX = clientX;
-        this.mouseScreenY = clientY;
-        const w = Math.max(1, window.innerWidth);
-        const h = Math.max(1, window.innerHeight);
-        this.mouseNdcX = (clientX / w) * 2 - 1;
-        this.mouseNdcY = -(clientY / h) * 2 + 1;
+        const forced = this.isForcedLandscape();
+        const w = Math.max(1, forced ? window.innerHeight : window.innerWidth);
+        const h = Math.max(1, forced ? window.innerWidth : window.innerHeight);
+        const lx = forced ? clientY : clientX;
+        const ly = forced ? (window.innerWidth - clientX) : clientY;
+
+        this.mouseScreenX = lx;
+        this.mouseScreenY = ly;
+        this.mouseNdcX = (lx / w) * 2 - 1;
+        this.mouseNdcY = -(ly / h) * 2 + 1;
 
         const cx = w * 0.5;
         const cy = h * 0.5;
         const maxR = Math.min(cx, cy) * 0.65;
-        this.mouseX = Math.max(-1, Math.min(1, (clientX - cx) / maxR));
-        this.mouseY = Math.max(-1, Math.min(1, (clientY - cy) / maxR));
+        this.mouseX = Math.max(-1, Math.min(1, (lx - cx) / maxR));
+        this.mouseY = Math.max(-1, Math.min(1, (ly - cy) / maxR));
       };
 
       window.addEventListener('mousemove', (e) => updatePointerCoords(e.clientX, e.clientY));
@@ -3569,25 +3674,29 @@
       const h = this.canvas.height;
       ctx.clearRect(0, 0, w, h);
 
-      if (!ac) return;
+      if (!ac) return 0;
 
       const cx = w * 0.5;
       const cy = h * 0.5;
       const hudColor = '#00ff9d';
       const warnColor = '#ff3b47';
       const cyanColor = '#38bdf8';
-      const isCompact = w < 700;
+      const isMobile = Boolean(input && input.touchUIVisible);
 
-      // 0. Top-Left Live FFA Leaderboard & Armageddon Clock (:00 IST)
-      this.renderTopLeftOverlay(ctx, allAircraft, armageddonState, highScore, isCompact);
+      // Top overlay: sleek single-line bar on Mobile vs full Top-5 box on Desktop
+      if (isMobile) {
+        this.renderMobileTopBar(ctx, ac, armageddonState, w);
+      } else {
+        this.renderTopLeftOverlay(ctx, allAircraft, armageddonState, highScore, false);
+      }
 
       if (!ac.alive) {
         if (ac.lives > 0 && !ac.eliminated) {
           ctx.save();
           ctx.fillStyle = '#fbbf24';
-          ctx.font = 'bold 20px Consolas, monospace';
+          ctx.font = isMobile ? 'bold 15px Consolas, monospace' : 'bold 20px Consolas, monospace';
           ctx.textAlign = 'center';
-          ctx.fillText(`RESPAWNING IN ${Math.max(0.1, ac.respawnTimer).toFixed(1)}s (${ac.lives} ${ac.lives === 1 ? 'LIFE' : 'LIVES'} REMAINING)...`, cx, cy - 30);
+          ctx.fillText(`RESPAWNING IN ${Math.max(0.1, ac.respawnTimer).toFixed(1)}s (${ac.lives}♥ LEFT)...`, cx, cy - 20);
           ctx.restore();
         }
         return 0;
@@ -3597,24 +3706,13 @@
       if (cameraMode === 'COCKPIT') {
         ctx.save();
         ctx.strokeStyle = 'rgba(20, 32, 48, 0.88)';
-        ctx.lineWidth = 14;
+        ctx.lineWidth = isMobile ? 9 : 14;
         ctx.beginPath();
         ctx.moveTo(w * 0.14, h);
         ctx.quadraticCurveTo(w * 0.25, h * 0.35, w * 0.36, 0);
         ctx.moveTo(w * 0.86, h);
         ctx.quadraticCurveTo(w * 0.75, h * 0.35, w * 0.64, 0);
         ctx.stroke();
-        ctx.fillStyle = 'rgba(10, 16, 26, 0.82)';
-        ctx.beginPath();
-        ctx.moveTo(w * 0.22, h);
-        ctx.lineTo(w * 0.34, h - 54);
-        ctx.lineTo(w * 0.66, h - 54);
-        ctx.lineTo(w * 0.78, h);
-        ctx.closePath();
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(0, 255, 157, 0.28)';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(cx - 190, cy - 155, 380, 290);
         ctx.restore();
       }
 
@@ -3642,181 +3740,177 @@
       const by = bsScreen.inFront ? bsScreen.y : cy;
 
       ctx.beginPath();
-      ctx.moveTo(bx - 14, by); ctx.lineTo(bx - 5, by);
-      ctx.moveTo(bx + 5, by);  ctx.lineTo(bx + 14, by);
-      ctx.moveTo(bx, by - 14); ctx.lineTo(bx, by - 5);
-      ctx.moveTo(bx, by + 5);  ctx.lineTo(bx, by + 14);
+      ctx.moveTo(bx - 12, by); ctx.lineTo(bx - 4, by);
+      ctx.moveTo(bx + 4, by);  ctx.lineTo(bx + 12, by);
+      ctx.moveTo(bx, by - 12); ctx.lineTo(bx, by - 4);
+      ctx.moveTo(bx, by + 4);  ctx.lineTo(bx, by + 12);
       ctx.stroke();
 
-      // Mouse Steering Cursor Reticle
+      // Mouse / Touch Steering Cursor Reticle
       if (input && !isSpectating) {
         const mx = input.mouseScreenX;
         const my = input.mouseScreenY;
         const activeSteer = input.mouseButtons.left || input.freeMouseSteer;
 
-        ctx.save();
-        if (activeSteer) {
-          ctx.strokeStyle = 'rgba(56, 189, 248, 0.55)';
-          ctx.setLineDash([4, 4]);
+        if (!isMobile || activeSteer) {
+          ctx.save();
+          if (activeSteer) {
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.55)';
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(bx, by);
+            ctx.lineTo(mx, my);
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+
+          ctx.strokeStyle = activeSteer ? '#38bdf8' : 'rgba(148, 163, 184, 0.45)';
+          ctx.lineWidth = activeSteer ? 2.0 : 1.4;
           ctx.beginPath();
-          ctx.moveTo(bx, by);
-          ctx.lineTo(mx, my);
+          ctx.arc(mx, my, activeSteer ? 14 : 11, 0, Math.PI * 2);
           ctx.stroke();
-          ctx.setLineDash([]);
+
+          ctx.fillStyle = activeSteer ? '#38bdf8' : 'rgba(148, 163, 184, 0.6)';
+          ctx.beginPath();
+          ctx.arc(mx, my, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
         }
-
-        ctx.strokeStyle = activeSteer ? '#38bdf8' : 'rgba(148, 163, 184, 0.45)';
-        ctx.lineWidth = activeSteer ? 2.0 : 1.4;
-        ctx.beginPath();
-        ctx.arc(mx, my, activeSteer ? 16 : 12, 0, Math.PI * 2);
-        ctx.stroke();
-
-        ctx.fillStyle = activeSteer ? '#38bdf8' : 'rgba(148, 163, 184, 0.6)';
-        ctx.beginPath();
-        ctx.arc(mx, my, 2.5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
       }
 
       // Missile Seeker Cone Ring
-      const coneRadius = Math.min(w, h) * 0.19;
-      ctx.strokeStyle = 'rgba(0, 255, 157, 0.28)';
+      const coneRadius = Math.min(w, h) * (isMobile ? 0.22 : 0.19);
+      ctx.strokeStyle = 'rgba(0, 255, 157, 0.24)';
       ctx.setLineDash([6, 6]);
       ctx.beginPath();
       ctx.arc(cx, cy, coneRadius, 0, Math.PI * 2);
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // 2. Artificial Horizon & Pitch Ladder
       const euler = new THREE.Euler().setFromQuaternion(ac.mesh.quaternion, 'YXZ');
       const pitchDeg = THREE.MathUtils.radToDeg(euler.x);
       const rollRad = euler.z;
       const headingDeg = (THREE.MathUtils.radToDeg(-euler.y) % 360 + 360) % 360;
+      const altM = Math.max(0, Math.round(ac.mesh.position.y));
 
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(rollRad);
-      ctx.strokeStyle = 'rgba(0, 255, 157, 0.65)';
-      ctx.fillStyle = 'rgba(0, 255, 157, 0.75)';
-      ctx.font = '10px Consolas, monospace';
+      // 2. Desktop-Only Instruments (Pitch Ladder, Speed/Alt Tapes, Compass, Bottom-Right Telemetry Table)
+      // On Phone, these are omitted to keep the landscape viewport clean and unobstructed!
+      if (!isMobile) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(rollRad);
+        ctx.strokeStyle = 'rgba(0, 255, 157, 0.65)';
+        ctx.fillStyle = 'rgba(0, 255, 157, 0.75)';
+        ctx.font = '10px Consolas, monospace';
 
-      const pxPerDeg = 4.2;
-      for (let deg = -60; deg <= 60; deg += 10) {
-        const dy = (pitchDeg - deg) * pxPerDeg;
-        if (Math.abs(dy) > 125) continue;
-        const barW = deg === 0 ? 58 : 26;
-        ctx.beginPath();
-        if (deg === 0) {
-          ctx.moveTo(-barW - 22, dy); ctx.lineTo(-22, dy);
-          ctx.moveTo(22, dy); ctx.lineTo(barW + 22, dy);
-        } else {
-          if (deg < 0) ctx.setLineDash([4, 3]);
-          ctx.moveTo(-barW - 18, dy); ctx.lineTo(-18, dy);
-          ctx.lineTo(-18, dy + (deg > 0 ? 5 : -5));
-          ctx.moveTo(18, dy + (deg > 0 ? 5 : -5));
-          ctx.lineTo(18, dy); ctx.lineTo(barW + 18, dy);
-          ctx.setLineDash([]);
-          ctx.fillText(`${deg}`, barW + 22, dy + 3);
+        const pxPerDeg = 4.2;
+        for (let deg = -60; deg <= 60; deg += 10) {
+          const dy = (pitchDeg - deg) * pxPerDeg;
+          if (Math.abs(dy) > 125) continue;
+          const barW = deg === 0 ? 58 : 26;
+          ctx.beginPath();
+          if (deg === 0) {
+            ctx.moveTo(-barW - 22, dy); ctx.lineTo(-22, dy);
+            ctx.moveTo(22, dy); ctx.lineTo(barW + 22, dy);
+          } else {
+            if (deg < 0) ctx.setLineDash([4, 3]);
+            ctx.moveTo(-barW - 18, dy); ctx.lineTo(-18, dy);
+            ctx.lineTo(-18, dy + (deg > 0 ? 5 : -5));
+            ctx.moveTo(18, dy + (deg > 0 ? 5 : -5));
+            ctx.lineTo(18, dy); ctx.lineTo(barW + 18, dy);
+            ctx.setLineDash([]);
+            ctx.fillText(`${deg}`, barW + 22, dy + 3);
+          }
+          ctx.stroke();
         }
-        ctx.stroke();
-      }
-      ctx.restore();
+        ctx.restore();
 
-      // 3. Speed & Altitude Boxes + Heading Tape
-      ctx.strokeStyle = hudColor;
-      ctx.fillStyle = 'rgba(4, 12, 24, 0.65)';
-
-      const wingSpread = isCompact ? Math.max(68, w * 0.20) : 225;
-
-      const speedKts = Math.round(ac.flight.speed * 3.2);
-      const speedKmh = Math.round(ac.flight.speed * 5.9);
-      const mach = (ac.flight.speed / 195).toFixed(2);
-      const leftX = Math.max(92, cx - wingSpread);
-      ctx.fillRect(leftX - 88, cy - 22, 86, 44);
-      ctx.strokeRect(leftX - 88, cy - 22, 86, 44);
-      ctx.fillStyle = hudColor;
-      ctx.font = 'bold 16px Consolas, monospace';
-      ctx.fillText(`SPD ${speedKts}`, leftX - 82, cy - 2);
-      ctx.font = '11px Consolas, monospace';
-      ctx.fillText(`${speedKmh} KM/H`, leftX - 82, cy + 14);
-      ctx.fillText(`G   ${ac.flight.gForce.toFixed(1)}G`, leftX - 82, cy + 36);
-      if (!isCompact) {
+        // Speed & Altitude Tapes
+        ctx.strokeStyle = hudColor;
+        ctx.fillStyle = 'rgba(4, 12, 24, 0.65)';
+        const speedKts = Math.round(ac.flight.speed * 3.2);
+        const speedKmh = Math.round(ac.flight.speed * 5.9);
+        const mach = (ac.flight.speed / 195).toFixed(2);
+        const leftX = cx - 225;
+        ctx.fillRect(leftX - 88, cy - 22, 86, 44);
+        ctx.strokeRect(leftX - 88, cy - 22, 86, 44);
+        ctx.fillStyle = hudColor;
+        ctx.font = 'bold 16px Consolas, monospace';
+        ctx.fillText(`SPD ${speedKts}`, leftX - 82, cy - 2);
+        ctx.font = '11px Consolas, monospace';
+        ctx.fillText(`${speedKmh} KM/H`, leftX - 82, cy + 14);
+        ctx.fillText(`G   ${ac.flight.gForce.toFixed(1)}G`, leftX - 82, cy + 36);
         ctx.fillText(`M   ${mach}`, leftX - 82, cy + 52);
         ctx.fillText(`SCORE ${ac.score}`, leftX - 82, cy + 68);
+
+        const rightX = cx + 225;
+        ctx.fillStyle = 'rgba(4, 12, 24, 0.65)';
+        ctx.fillRect(rightX + 2, cy - 22, 88, 44);
+        ctx.strokeRect(rightX + 2, cy - 22, 88, 44);
+        ctx.fillStyle = altM < 130 ? warnColor : hudColor;
+        ctx.font = 'bold 16px Consolas, monospace';
+        ctx.fillText(`ALT ${altM}m`, rightX + 8, cy - 2);
+        ctx.font = '11px Consolas, monospace';
+        ctx.fillText(`${Math.round(altM * 3.28)} FT`, rightX + 8, cy + 14);
+
+        // Heading Compass Bar
+        ctx.fillStyle = 'rgba(4, 12, 24, 0.65)';
+        ctx.fillRect(cx - 80, 48, 160, 26);
+        ctx.strokeStyle = hudColor;
+        ctx.strokeRect(cx - 80, 48, 160, 26);
+        ctx.fillStyle = hudColor;
+        ctx.font = 'bold 14px Consolas, monospace';
+        const hdgStr = String(Math.round(headingDeg)).padStart(3, '0');
+        const cardinals = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+        const card = cardinals[Math.round(headingDeg / 45) % 8];
+        ctx.textAlign = 'center';
+        ctx.fillText(`HDG ${hdgStr}° [${card}]`, cx, 66);
+        ctx.textAlign = 'left';
+
+        // Desktop Bottom-Right Weapon, Lives, Score, Throttle & Health Panel
+        const panelW = 235;
+        const panelH = 138;
+        const px = w - panelW - 16;
+        const py = h - panelH - 16;
+        ctx.fillStyle = 'rgba(6, 14, 28, 0.84)';
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+        ctx.fillRect(px, py, panelW, panelH);
+        ctx.strokeRect(px, py, panelW, panelH);
+
+        ctx.font = 'bold 12px Consolas, monospace';
+        ctx.fillStyle = '#00ff9d';
+        const hearts = '♥'.repeat(Math.max(0, ac.lives)) + '♡'.repeat(Math.max(0, 3 - ac.lives));
+        ctx.fillText(`${ac.callsign} [${hearts}]`, px + 10, py + 18);
+
+        ctx.fillStyle = '#fbbf24';
+        ctx.font = 'bold 11.5px Consolas, monospace';
+        ctx.fillText(`SCORE: ${ac.score} PTS`, px + 10, py + 34);
+
+        ctx.fillStyle = '#cbd5e1';
+        ctx.font = '11px Consolas, monospace';
+        ctx.fillText(`HULL ${Math.max(0, Math.round(ac.hp))}%`, px + 10, py + 52);
+        ctx.fillStyle = 'rgba(255,255,255,0.12)';
+        ctx.fillRect(px + 82, py + 42, panelW - 94, 9);
+        ctx.fillStyle = ac.hp > 50 ? hudColor : (ac.hp > 25 ? '#fbbf24' : warnColor);
+        ctx.fillRect(px + 82, py + 42, (panelW - 94) * (Math.max(0, ac.hp) / ac.stats.maxHp), 9);
+
+        const thrPct = Math.round(ac.flight.throttle * 100);
+        const isAB = ac.flight.throttle > 0.78;
+        ctx.fillStyle = isAB ? '#fbbf24' : '#cbd5e1';
+        ctx.fillText(isAB ? `THR  AB ${thrPct}%` : `THR  ${thrPct}%`, px + 10, py + 68);
+        ctx.fillStyle = 'rgba(255,255,255,0.12)';
+        ctx.fillRect(px + 82, py + 58, panelW - 94, 9);
+        ctx.fillStyle = isAB ? '#ff6b2b' : cyanColor;
+        ctx.fillRect(px + 82, py + 58, (panelW - 94) * ac.flight.throttle, 9);
+
+        ctx.fillStyle = hudColor;
+        ctx.font = 'bold 11.5px Consolas, monospace';
+        ctx.fillText(`GUN  ${String(ac.ammo).padStart(3, '0')} / ${CONFIG.WEAPONS.CANNON.maxAmmo} [F]`, px + 10, py + 88);
+        ctx.fillText(`MSL  ${ac.missiles} / ${CONFIG.WEAPONS.MISSILE.maxCount} ${ac.missileCooldown > 0 ? '(RELOAD)' : '[SPACE]'}`, px + 10, py + 106);
+        ctx.fillText(`FLR  ${ac.flares} / ${CONFIG.WEAPONS.FLARE.maxCount} [X]`, px + 10, py + 124);
       }
 
-      const altM = Math.max(0, Math.round(ac.mesh.position.y));
-      const rightX = Math.min(w - 94, cx + wingSpread);
-      ctx.fillStyle = 'rgba(4, 12, 24, 0.65)';
-      ctx.fillRect(rightX + 2, cy - 22, 88, 44);
-      ctx.strokeRect(rightX + 2, cy - 22, 88, 44);
-      ctx.fillStyle = altM < 130 ? warnColor : hudColor;
-      ctx.font = 'bold 16px Consolas, monospace';
-      ctx.fillText(`ALT ${altM}m`, rightX + 8, cy - 2);
-      ctx.font = '11px Consolas, monospace';
-      ctx.fillText(`${Math.round(altM * 3.28)} FT`, rightX + 8, cy + 14);
-
-      // Top: Heading Compass Bar
-      ctx.fillStyle = 'rgba(4, 12, 24, 0.65)';
-      ctx.fillRect(cx - 80, 48, 160, 26);
-      ctx.strokeStyle = hudColor;
-      ctx.strokeRect(cx - 80, 48, 160, 26);
-      ctx.fillStyle = hudColor;
-      ctx.font = 'bold 14px Consolas, monospace';
-      const hdgStr = String(Math.round(headingDeg)).padStart(3, '0');
-      const cardinals = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-      const card = cardinals[Math.round(headingDeg / 45) % 8];
-      ctx.textAlign = 'center';
-      ctx.fillText(`HDG ${hdgStr}° [${card}]`, cx, 66);
-      ctx.textAlign = 'left';
-
-      // 4. Bottom-Right Weapon, Lives, Score, Throttle & Health Panel
-      const touchOffset = (input && input.touchUIVisible) ? 132 : 0;
-      const panelW = isCompact ? 195 : 235;
-      const panelH = 138;
-      const px = w - panelW - 12;
-      const py = h - panelH - 16 - touchOffset;
-      ctx.fillStyle = 'rgba(6, 14, 28, 0.84)';
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
-      ctx.fillRect(px, py, panelW, panelH);
-      ctx.strokeRect(px, py, panelW, panelH);
-
-      ctx.font = 'bold 12px Consolas, monospace';
-      ctx.fillStyle = '#00ff9d';
-      const hearts = '♥'.repeat(Math.max(0, ac.lives)) + '♡'.repeat(Math.max(0, 3 - ac.lives));
-      ctx.fillText(`${ac.callsign} [${hearts}]`, px + 10, py + 18);
-
-      // Score & Hull
-      ctx.fillStyle = '#fbbf24';
-      ctx.font = 'bold 11.5px Consolas, monospace';
-      ctx.fillText(`SCORE: ${ac.score} PTS`, px + 10, py + 34);
-
-      ctx.fillStyle = '#cbd5e1';
-      ctx.font = '11px Consolas, monospace';
-      ctx.fillText(`HULL ${Math.max(0, Math.round(ac.hp))}%`, px + 10, py + 52);
-      ctx.fillStyle = 'rgba(255,255,255,0.12)';
-      ctx.fillRect(px + 82, py + 42, panelW - 94, 9);
-      ctx.fillStyle = ac.hp > 50 ? hudColor : (ac.hp > 25 ? '#fbbf24' : warnColor);
-      ctx.fillRect(px + 82, py + 42, (panelW - 94) * (Math.max(0, ac.hp) / ac.stats.maxHp), 9);
-
-      // Throttle / Afterburner Bar
-      const thrPct = Math.round(ac.flight.throttle * 100);
-      const isAB = ac.flight.throttle > 0.78;
-      ctx.fillStyle = isAB ? '#fbbf24' : '#cbd5e1';
-      ctx.fillText(isAB ? `THR  AB ${thrPct}%` : `THR  ${thrPct}%`, px + 10, py + 68);
-      ctx.fillStyle = 'rgba(255,255,255,0.12)';
-      ctx.fillRect(px + 82, py + 58, panelW - 94, 9);
-      ctx.fillStyle = isAB ? '#ff6b2b' : cyanColor;
-      ctx.fillRect(px + 82, py + 58, (panelW - 94) * ac.flight.throttle, 9);
-
-      // Weapons Counters
-      ctx.fillStyle = hudColor;
-      ctx.font = 'bold 11.5px Consolas, monospace';
-      ctx.fillText(`GUN  ${String(ac.ammo).padStart(3, '0')} / ${CONFIG.WEAPONS.CANNON.maxAmmo} [F]`, px + 10, py + 88);
-      ctx.fillText(`MSL  ${ac.missiles} / ${CONFIG.WEAPONS.MISSILE.maxCount} ${ac.missileCooldown > 0 ? '(RELOAD)' : '[SPACE]'}`, px + 10, py + 106);
-      ctx.fillText(`FLR  ${ac.flares} / ${CONFIG.WEAPONS.FLARE.maxCount} [X]`, px + 10, py + 124);
-
-      // 5. Target Box, Lead Indicator Pipper, Lock-On Progress & Off-Screen Arrows (All FFA opponents)
+      // 3. Target Box, Lead Indicator Pipper, Lock-On Progress & Off-Screen Arrows
       for (const other of allAircraft) {
         if (!other.alive || other === ac) continue;
         const isCurrentTarget = other === ac.target;
@@ -3825,15 +3919,15 @@
 
         if (screen.inFront && screen.x >= 20 && screen.x <= w - 20 && screen.y >= 20 && screen.y <= h - 20) {
           if (isCurrentTarget) {
-            const boxS = 22;
+            const boxS = isMobile ? 18 : 22;
             ctx.strokeStyle = ac.lockState.isLocked ? warnColor : hudColor;
             ctx.lineWidth = 2.0;
             ctx.strokeRect(screen.x - boxS, screen.y - boxS, boxS * 2, boxS * 2);
 
             ctx.fillStyle = ac.lockState.isLocked ? warnColor : hudColor;
-            ctx.font = 'bold 11px Consolas, monospace';
-            ctx.fillText(`${other.callsign} (${other.stats.shortName}) [${other.score}]`, screen.x - boxS, screen.y - boxS - 14);
-            ctx.fillText(`${dist}m • ${other.lives}♥`, screen.x - boxS, screen.y - boxS - 3);
+            ctx.font = 'bold 10.5px Consolas, monospace';
+            ctx.fillText(`${other.callsign} [${other.score}]`, screen.x - boxS, screen.y - boxS - 13);
+            ctx.fillText(`${dist}m • ${other.lives}♥`, screen.x - boxS, screen.y - boxS - 2);
 
             ctx.fillStyle = 'rgba(0,0,0,0.6)';
             ctx.fillRect(screen.x - boxS, screen.y + boxS + 4, boxS * 2, 4);
@@ -3841,7 +3935,7 @@
             ctx.fillRect(screen.x - boxS, screen.y + boxS + 4, (boxS * 2) * (other.hp / other.stats.maxHp), 4);
 
             if (ac.lockState.progress > 0.02) {
-              const lockR = 44 - ac.lockState.progress * 22;
+              const lockR = 40 - ac.lockState.progress * 20;
               ctx.save();
               ctx.translate(screen.x, screen.y);
               ctx.rotate(Math.PI / 4 + ac.lockState.progress * Math.PI * 0.5);
@@ -3852,9 +3946,9 @@
               ctx.fillStyle = ac.lockState.isLocked ? warnColor : '#fbbf24';
               ctx.textAlign = 'center';
               ctx.fillText(
-                ac.lockState.isLocked ? 'SHOOT [SPACE] - LOCKED' : `LOCKING ${Math.round(ac.lockState.progress * 100)}%`,
+                ac.lockState.isLocked ? (isMobile ? 'LOCKED - TAP MISSILE' : 'SHOOT [SPACE] - LOCKED') : `LOCK ${Math.round(ac.lockState.progress * 100)}%`,
                 screen.x,
-                screen.y + boxS + 20
+                screen.y + boxS + 18
               );
               ctx.textAlign = 'left';
             }
@@ -3878,7 +3972,7 @@
                 ctx.setLineDash([]);
 
                 ctx.beginPath();
-                ctx.arc(leadScreen.x, leadScreen.y, 9, 0, Math.PI * 2);
+                ctx.arc(leadScreen.x, leadScreen.y, 8, 0, Math.PI * 2);
                 ctx.stroke();
                 ctx.beginPath();
                 ctx.arc(leadScreen.x, leadScreen.y, 2, 0, Math.PI * 2);
@@ -3886,19 +3980,14 @@
               }
             }
           } else {
-            ctx.strokeStyle = 'rgba(255, 71, 87, 0.75)';
+            ctx.strokeStyle = 'rgba(255, 71, 87, 0.7)';
             ctx.lineWidth = 1.2;
-            ctx.strokeRect(screen.x - 10, screen.y - 10, 20, 20);
-            if (dist < 1800) {
-              ctx.fillStyle = 'rgba(255, 130, 140, 0.85)';
-              ctx.font = '10px Consolas, monospace';
-              ctx.fillText(`${other.callsign}`, screen.x + 12, screen.y + 3);
-            }
+            ctx.strokeRect(screen.x - 8, screen.y - 8, 16, 16);
           }
         } else {
           const localPos = other.mesh.position.clone().applyMatrix4(camera.matrixWorldInverse);
           const angle = Math.atan2(localPos.y, localPos.x);
-          const arrowRadius = Math.min(w, h) * 0.36;
+          const arrowRadius = Math.min(w, h) * (isMobile ? 0.33 : 0.36);
           const ax = cx + Math.cos(angle) * arrowRadius;
           const ay = cy - Math.sin(angle) * arrowRadius;
 
@@ -3906,7 +3995,7 @@
           ctx.translate(ax, ay);
           ctx.rotate(-angle);
           ctx.fillStyle = isCurrentTarget ? '#fbbf24' : warnColor;
-          const sz = isCurrentTarget ? 11 : 7;
+          const sz = isCurrentTarget ? 10 : 6.5;
           ctx.beginPath();
           ctx.moveTo(sz, 0);
           ctx.lineTo(-sz, -sz * 0.65);
@@ -3918,7 +4007,7 @@
         }
       }
 
-      // 6. Central Warnings & Armageddon Banner
+      // 4. Central Warnings
       let threatLevel = 0;
       for (const m of missiles) {
         if (m.target === ac && !m.decoyFlare) {
@@ -3937,53 +4026,91 @@
 
       ctx.textAlign = 'center';
       const blink = Math.floor(performance.now() / 180) % 2 === 0;
-      if (armageddonState && armageddonState.active) {
-        ctx.fillStyle = blink ? '#ff2e43' : '#fbbf24';
-        ctx.font = 'bold 14px Consolas, monospace';
-        ctx.fillText(`⚡ ARMAGEDDON IN PROGRESS (${armageddonState.survivors} SURVIVORS LEFT) — NO RE-ENTRIES ⚡`, cx, 88);
-      }
-
+      const warnY = isMobile ? 54 : 112;
       if (threatLevel === 2) {
         ctx.fillStyle = blink ? '#ff2e43' : '#fbbf24';
-        ctx.font = 'bold 17px Consolas, monospace';
-        ctx.fillText('⚠ MISSILE LAUNCH DETECTED - EVADE & DEPLOY FLARES [X] ⚠', cx, 112);
+        ctx.font = isMobile ? 'bold 13px Consolas, monospace' : 'bold 17px Consolas, monospace';
+        ctx.fillText(isMobile ? '⚠ MISSILE INCOMING - TAP FLARES ⚠' : '⚠ MISSILE LAUNCH DETECTED - EVADE & DEPLOY FLARES [X] ⚠', cx, warnY);
       } else if (threatLevel === 1) {
         ctx.fillStyle = '#fbbf24';
-        ctx.font = 'bold 15px Consolas, monospace';
-        ctx.fillText('⚠ RADAR LOCK WARNING - HOSTILE TRACKING ⚠', cx, 112);
+        ctx.font = isMobile ? 'bold 12px Consolas, monospace' : 'bold 15px Consolas, monospace';
+        ctx.fillText('⚠ RADAR LOCK WARNING ⚠', cx, warnY);
       }
 
+      const bottomWarnY = isMobile ? (h - 24) : (cy + 145);
       if (ac.flight.isStalling && blink) {
         ctx.fillStyle = warnColor;
-        ctx.font = 'bold 16px Consolas, monospace';
-        ctx.fillText('⚠ AERODYNAMIC STALL - INCREASE SPEED [W] & LOWER NOSE ⚠', cx, cy + 145);
+        ctx.font = isMobile ? 'bold 12px Consolas, monospace' : 'bold 16px Consolas, monospace';
+        ctx.fillText('⚠ STALL - HOLD SPD+ ⚠', cx, bottomWarnY);
       } else if (altM < 130 && blink) {
         ctx.fillStyle = warnColor;
-        ctx.font = 'bold 16px Consolas, monospace';
-        ctx.fillText('⚠ TERRAIN PULL UP ⚠', cx, cy + 145);
-      } else if (ac.flight.outOfBoundsWarning) {
-        ctx.fillStyle = '#fbbf24';
-        ctx.font = 'bold 15px Consolas, monospace';
-        ctx.fillText(
-          ac.flight.autopilotOverride
-            ? 'AUTOPILOT ENGAGED: RETURNING TO ARENA'
-            : 'WARNING: LEAVING ARENA BOUNDARY - TURN BACK',
-          cx,
-          cy + 145
-        );
+        ctx.font = isMobile ? 'bold 12px Consolas, monospace' : 'bold 16px Consolas, monospace';
+        ctx.fillText('⚠ PULL UP ⚠', cx, bottomWarnY);
       }
       ctx.textAlign = 'left';
 
-      // 7. Circular Radar / Minimap (Plots opponents in Red, current target in Gold, and Neon Orbs in Cyan!)
-      this.renderRadar(ctx, ac, allAircraft, missiles, orbs, w, h, headingDeg, touchOffset, isCompact);
+      // 5. Circular Radar (Top-Left on Mobile so it never crowds bottom thumb pads; Bottom-Left on Desktop)
+      this.renderRadar(ctx, ac, allAircraft, missiles, orbs, w, h, headingDeg, isMobile);
 
-      const mslBtn = document.getElementById('tbtn-msl');
-      if (mslBtn) {
-        mslBtn.classList.toggle('locked-ready', Boolean(ac.lockState.isLocked));
+      // 6. Update Mobile Touch Button Live Counters
+      if (isMobile) {
+        const gunBtn = document.getElementById('tbtn-gun');
+        if (gunBtn && gunBtn.lastElementChild) gunBtn.lastElementChild.textContent = `${ac.ammo} RDS`;
+        const mslBtn = document.getElementById('tbtn-msl');
+        if (mslBtn) {
+          mslBtn.classList.toggle('locked-ready', Boolean(ac.lockState.isLocked));
+          if (mslBtn.lastElementChild) {
+            mslBtn.lastElementChild.textContent = ac.lockState.isLocked ? `LOCKED (${ac.missiles})` : `${ac.missiles} / 6`;
+          }
+        }
+        const flrBtn = document.getElementById('tbtn-flare');
+        if (flrBtn && flrBtn.lastElementChild) flrBtn.lastElementChild.textContent = `${ac.flares} LEFT`;
       }
 
       ctx.restore();
       return threatLevel;
+    }
+
+    renderMobileTopBar(ctx, ac, armageddonState, w) {
+      ctx.save();
+      const barW = Math.min(350, w - 210);
+      const bx = (w - barW) * 0.5;
+      const by = 8;
+      const bh = 26;
+
+      ctx.fillStyle = 'rgba(6, 14, 28, 0.72)';
+      ctx.strokeStyle = armageddonState && armageddonState.active ? '#ff3b47' : 'rgba(56, 189, 248, 0.35)';
+      ctx.lineWidth = 1.2;
+      ctx.fillRect(bx, by, barW, bh);
+      ctx.strokeRect(bx, by, barW, bh);
+
+      const hearts = '♥'.repeat(Math.max(0, ac.lives)) + '♡'.repeat(Math.max(0, 3 - ac.lives));
+      ctx.font = 'bold 11px Consolas, monospace';
+      ctx.fillStyle = '#ff6b81';
+      ctx.fillText(hearts, bx + 8, by + 17);
+
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillText(`${ac.score} PTS`, bx + 44, by + 17);
+
+      // Compact Hull Bar
+      const hx = bx + 118;
+      const hw = Math.max(44, barW - 220);
+      ctx.fillStyle = 'rgba(255,255,255,0.15)';
+      ctx.fillRect(hx, by + 8, hw, 9);
+      ctx.fillStyle = ac.hp > 50 ? '#00ff9d' : (ac.hp > 25 ? '#fbbf24' : '#ff3b47');
+      ctx.fillRect(hx, by + 8, hw * (Math.max(0, ac.hp) / ac.stats.maxHp), 9);
+
+      // Armageddon countdown on right of pill
+      ctx.textAlign = 'right';
+      ctx.fillStyle = armageddonState && armageddonState.active ? '#ff3b47' : '#38bdf8';
+      ctx.fillText(
+        armageddonState && armageddonState.active
+          ? `⚡ ${armageddonState.survivors} LEFT`
+          : `⚡ ${armageddonState ? armageddonState.countdownStr : '--:--'}`,
+        bx + barW - 8,
+        by + 17
+      );
+      ctx.restore();
     }
 
     renderTopLeftOverlay(ctx, allAircraft, armageddonState, highScore, isCompact) {
@@ -4028,10 +4155,10 @@
       ctx.restore();
     }
 
-    renderRadar(ctx, ac, allAircraft, missiles, orbs, w, h, headingDeg, touchOffset = 0, isCompact = false) {
-      const rRadius = isCompact ? 56 : 78;
-      const rx = 14 + rRadius;
-      const ry = h - 16 - rRadius - touchOffset;
+    renderRadar(ctx, ac, allAircraft, missiles, orbs, w, h, headingDeg, isMobile = false) {
+      const rRadius = isMobile ? 40 : 78;
+      const rx = 12 + rRadius;
+      const ry = isMobile ? (10 + rRadius) : (h - 16 - rRadius);
       const radarRange = 4500;
 
       ctx.save();
@@ -4115,9 +4242,11 @@
         }
       }
 
-      ctx.fillStyle = 'rgba(0, 255, 157, 0.75)';
-      ctx.font = '10px Consolas, monospace';
-      ctx.fillText('FFA RADAR', rx - 28, ry + rRadius - 6);
+      if (!isMobile) {
+        ctx.fillStyle = 'rgba(0, 255, 157, 0.75)';
+        ctx.font = '10px Consolas, monospace';
+        ctx.fillText('FFA RADAR', rx - 28, ry + rRadius - 6);
+      }
       ctx.restore();
     }
 
@@ -4253,12 +4382,20 @@
       };
       btnTouchUI.addEventListener('click', () => syncTouchUI(!this.input.touchUIVisible));
       btnTouchUI.classList.toggle('active', this.input.touchUIVisible);
+      document.getElementById('btn-fullscreen').addEventListener('click', () => {
+        this.input.requestMobileFullscreenAndLandscape();
+        setTimeout(() => this.handleResize(), 150);
+      });
       document.getElementById('btn-mute').addEventListener('click', () => this.toggleMute());
       document.getElementById('btn-pause').addEventListener('click', () => this.setPaused(this.state !== 'PAUSED'));
 
       document.getElementById('btn-launch').addEventListener('click', () => {
         this.audio.init();
+        if (this.input.isTouchDevice) {
+          this.input.requestMobileFullscreenAndLandscape();
+        }
         this.startMatch();
+        setTimeout(() => this.handleResize(), 150);
       });
       document.getElementById('btn-resume').addEventListener('click', () => this.setPaused(false));
       document.getElementById('btn-restart').addEventListener('click', () => this.redeployPlayerRun());
@@ -4426,7 +4563,9 @@
 
     toggleCamera() {
       this.cameraMode = this.cameraMode === 'CHASE' ? 'COCKPIT' : 'CHASE';
-      document.getElementById('btn-cam').textContent = `CAM: ${this.cameraMode} [C]`;
+      document.getElementById('btn-cam').textContent = this.input.isTouchDevice
+        ? `CAM: ${this.cameraMode === 'CHASE' ? '3RD' : '1ST'}`
+        : `CAM: ${this.cameraMode} [C]`;
     }
 
     toggleMouseSteer() {
@@ -4446,7 +4585,9 @@
     toggleMute() {
       this.audio.setMuted(!this.audio.muted);
       const btn = document.getElementById('btn-mute');
-      btn.textContent = `AUDIO: ${this.audio.muted ? 'MUTED' : 'ON'} [M]`;
+      btn.textContent = this.input.isTouchDevice
+        ? (this.audio.muted ? 'MUTE' : 'AUDIO')
+        : `AUDIO: ${this.audio.muted ? 'MUTED' : 'ON'} [M]`;
       btn.classList.toggle('active', !this.audio.muted);
     }
 
@@ -4481,16 +4622,18 @@
 
     addFeedItem(text, cls = 'kill-blue') {
       const container = document.getElementById('feed-container');
+      const isMob = Boolean(this.input && this.input.touchUIVisible);
       const div = document.createElement('div');
       div.className = `feed-item ${cls}`;
       div.textContent = text;
       container.prepend(div);
-      while (container.children.length > 6) {
+      const maxItems = isMob ? 1 : 6;
+      while (container.children.length > maxItems) {
         container.removeChild(container.lastChild);
       }
       setTimeout(() => {
         if (div.parentNode === container) container.removeChild(div);
-      }, 6500);
+      }, isMob ? 2400 : 6500);
     }
 
     updateHighScore() {
@@ -4803,8 +4946,16 @@
     }
 
     handleResize() {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
+      const isTouch = Boolean('ontouchstart' in window || navigator.maxTouchPoints > 0 || Math.min(window.innerWidth, window.innerHeight) < 820);
+      this.input.isTouchDevice = isTouch;
+      document.body.classList.toggle('mobile-mode', isTouch);
+
+      const container = document.getElementById('game-container');
+      const forceLandscape = isTouch && (window.innerHeight > window.innerWidth);
+      container.classList.toggle('force-landscape', forceLandscape);
+
+      const w = forceLandscape ? window.innerHeight : window.innerWidth;
+      const h = forceLandscape ? window.innerWidth : window.innerHeight;
       this.renderer.setSize(w, h);
       this.camera.aspect = w / h;
       this.camera.updateProjectionMatrix();
