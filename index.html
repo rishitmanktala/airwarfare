@@ -647,6 +647,56 @@
         grid-template-columns: 1fr;
       }
     }
+
+    .callsign-input {
+      width: 100%;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1.5px solid rgba(56, 189, 248, 0.45);
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: #f8fafc;
+      font-family: 'Consolas', monospace;
+      font-size: 14px;
+      font-weight: 700;
+      outline: none;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+    .callsign-input:focus {
+      border-color: var(--hud-green);
+      box-shadow: 0 0 12px rgba(0, 255, 157, 0.25);
+    }
+    .livery-row {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+    }
+    .livery-swatch {
+      height: 34px;
+      border-radius: 7px;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+      cursor: pointer;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+    .livery-swatch.active {
+      border-color: #ffffff;
+      transform: scale(1.07);
+      box-shadow: 0 0 12px rgba(255, 255, 255, 0.45);
+    }
+    #champion-overlay {
+      position: absolute;
+      top: 64px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 8;
+      background: rgba(8, 15, 28, 0.92);
+      border: 2px solid #fbbf24;
+      border-radius: 12px;
+      padding: 18px 28px;
+      text-align: center;
+      box-shadow: 0 0 40px rgba(251, 191, 36, 0.35);
+      min-width: 320px;
+    }
   </style>
 </head>
 <body>
@@ -691,26 +741,35 @@
       <button id="btn-spec-end" class="hud-mini-btn">END SORTIE</button>
     </div>
 
-    <!-- START SCREEN -->
+    <!-- CHAMPION SHOWCASE BANNER (Shown when Armageddon is won while camera orbits winner) -->
+    <div id="champion-overlay" class="hidden">
+      <div style="font-size:11px;color:#fbbf24;letter-spacing:0.15em;font-weight:800;text-transform:uppercase;">⚡ ARMAGEDDON SURVIVOR // SERVER CHAMPION ⚡</div>
+      <div id="champ-name" style="font-size:26px;font-weight:900;color:#ffffff;margin:6px 0;">--</div>
+      <div id="champ-score" style="font-size:14px;color:#00ff9d;font-family:monospace;margin-bottom:12px;">SCORE: 0</div>
+      <div id="champ-timer" style="font-size:12px;color:#94a3b8;margin-bottom:10px;">Showcasing Champion...</div>
+      <button id="btn-join-next-server" class="primary-btn hidden" style="padding:10px 24px;font-size:13px;">JOIN NEW SERVER ▶</button>
+    </div>
+
+    <!-- START SCREEN (LIVE MULTIPLAYER FFA LOBBY) -->
     <div id="start-screen" class="overlay-screen">
       <div class="panel-card">
         <div class="title-header">
           <div>
-            <h1>SKY DOMINION</h1>
-            <div class="subtitle">Tactical 5th-Gen Air Superiority Simulator // F-22 vs Su-57</div>
+            <h1>SKY DOMINION // NIGHTFALL</h1>
+            <div class="subtitle">Global Free-For-All Arena // 3 Lives Per Run // Hourly Armageddon (:00 IST)</div>
           </div>
-          <div style="font-size:12px;color:#38bdf8;font-family:monospace;">60 FPS PROCEDURAL WEBGL // ZERO ASSETS</div>
+          <div id="lobby-server-status" style="font-size:12px;color:#00ff9d;font-family:monospace;">● MUMBAI-FFA-04 // 12 PILOTS ONLINE // 26ms</div>
         </div>
 
         <div class="setup-grid">
           <!-- Aircraft Selection -->
           <div>
-            <span class="section-label">1. Select Your Fighter &amp; Squadron</span>
+            <span class="section-label">1. Choose Your Airframe</span>
             <div class="aircraft-cards">
               <div id="card-f22" class="aircraft-card selected-blue" data-ac="F22">
-                <span class="ac-team-badge badge-blue">Team Blue // USAF</span>
+                <span class="ac-team-badge badge-blue">Stealth Interceptor</span>
                 <div class="ac-name">F-22A Raptor</div>
-                <div class="ac-desc">Twin canted tails, diamond delta wings. Superior stealth signature (harder to lock) &amp; higher supercruise acceleration.</div>
+                <div class="ac-desc">Twin canted tails, diamond delta wings. Lower radar signature (harder to lock) &amp; higher supercruise acceleration.</div>
                 <div class="stat-row">
                   <span>Acceleration</span>
                   <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:94%;background:#38bdf8;"></div></div>
@@ -726,7 +785,7 @@
               </div>
 
               <div id="card-su57" class="aircraft-card" data-ac="SU57">
-                <span class="ac-team-badge badge-red">Team Red // VKS</span>
+                <span class="ac-team-badge badge-red">Super-Maneuverable</span>
                 <div class="ac-name">Su-57 Felon</div>
                 <div class="ac-desc">Wide blended body, swept wings, all-moving tailplanes. Tighter sustained turn rate &amp; superior low-speed dogfight agility.</div>
                 <div class="stat-row">
@@ -745,23 +804,22 @@
             </div>
           </div>
 
-          <!-- Match Size & Difficulty -->
+          <!-- Callsign, Livery & Steering Mode -->
           <div>
             <div class="option-group">
-              <span class="section-label">2. Squadron Size (Player + AI Bots)</span>
-              <div class="btn-row" id="size-group">
-                <button class="opt-btn" data-size="3">3 v 3<span>6 Aircraft</span></button>
-                <button class="opt-btn active" data-size="5">5 v 5<span>10 Aircraft</span></button>
-                <button class="opt-btn" data-size="8">8 v 8<span>16 Aircraft Furball</span></button>
-              </div>
+              <span class="section-label">2. Pilot Callsign</span>
+              <input id="input-callsign" class="callsign-input" type="text" maxlength="16" placeholder="Enter Callsign..." value="NightHawk_IN" />
             </div>
 
             <div class="option-group">
-              <span class="section-label">3. AI Pilot Skill Level</span>
-              <div class="btn-row" id="diff-group">
-                <button class="opt-btn" data-diff="EASY">Easy<span>Forgiving Aim</span></button>
-                <button class="opt-btn active" data-diff="NORMAL">Normal<span>Balanced BFM</span></button>
-                <button class="opt-btn" data-diff="ACE">Ace<span>Lethal Tacticians</span></button>
+              <span class="section-label">3. Custom Neon Trim &amp; Afterburner</span>
+              <div class="livery-row" id="livery-group">
+                <div class="livery-swatch active" data-livery="0" style="background:linear-gradient(135deg,#00ff9d,#0284c7);" title="Cyber Emerald"></div>
+                <div class="livery-swatch" data-livery="1" style="background:linear-gradient(135deg,#38bdf8,#6366f1);" title="Ion Cyan"></div>
+                <div class="livery-swatch" data-livery="2" style="background:linear-gradient(135deg,#ff3b47,#f97316);" title="Crimson Nova"></div>
+                <div class="livery-swatch" data-livery="3" style="background:linear-gradient(135deg,#d946ef,#8b5cf6);" title="Plasma Violet"></div>
+                <div class="livery-swatch" data-livery="4" style="background:linear-gradient(135deg,#fbbf24,#ea580c);" title="Solar Gold"></div>
+                <div class="livery-swatch" data-livery="5" style="background:linear-gradient(135deg,#f43f5e,#be123c);" title="Blood Moon"></div>
               </div>
             </div>
 
@@ -776,54 +834,52 @@
         </div>
 
         <div class="controls-summary">
-          <span class="section-label" style="margin-bottom:6px;">Flight &amp; Combat Controls (Mouse Point &amp; Fly)</span>
+          <span class="section-label" style="margin-bottom:6px;">Arena Rules &amp; Controls (Desktop + Mobile Touch)</span>
           <div class="controls-grid">
-            <div><span class="key-pill">Hold LMB + Move</span> Fly Toward Mouse</div>
+            <div><span class="key-pill">Hold LMB / Drag</span> Fly Toward Cursor</div>
             <div><span class="key-pill">W / S</span> Increase / Decrease Speed</div>
             <div><span class="key-pill">A / D</span> Roll Left / Right</div>
             <div><span class="key-pill">F</span> Fire 20mm Cannon Bullets</div>
             <div><span class="key-pill">Space</span> Fire Homing Missile</div>
             <div><span class="key-pill">X</span> Deploy IR/Radar Flares</div>
-            <div><span class="key-pill">R</span> Cycle Hostile Target</div>
+            <div><span class="key-pill">R</span> Cycle Nearest Target</div>
             <div><span class="key-pill">C</span> Chase / Cockpit View</div>
-            <div><span class="key-pill">V</span> Hold-Click vs Free Mouse</div>
-            <div><span class="key-pill">Tab</span> Scoreboard / Pause</div>
-            <div><span class="key-pill">M</span> Mute WebAudio</div>
+            <div><span class="key-pill">Tab</span> Live Leaderboard</div>
+            <div><span class="key-pill">Neon Orbs</span> +HP &amp; +Score</div>
           </div>
         </div>
 
         <div class="launch-row">
           <div style="font-size:12px;color:#94a3b8;">
-            <b>Desktop:</b> Hold Left Click to steer, <b>W/S</b> speed, <b>A/D</b> roll, <b>F</b> bullets, <b>Space</b> missile.<br/>
-            <b>Phone / Touch:</b> Drag anywhere on the sky to steer + use on-screen thumb buttons for Speed, Roll, Guns &amp; Missiles!
+            Collect falling <b>Neon Orbs</b> for HP &amp; Score. Downed pilots drop their score as loot orbs! Every <b>:00 IST</b> triggers <b>Armageddon</b> (no new joins; last survivor wins).
           </div>
-          <button id="btn-launch" class="primary-btn">SCRAMBLE SORTIE ▶</button>
+          <button id="btn-launch" class="primary-btn">JOIN FFA SERVER ▶</button>
         </div>
       </div>
     </div>
 
-    <!-- PAUSE / SCOREBOARD OVERLAY -->
+    <!-- PAUSE / LIVE SERVER LEADERBOARD OVERLAY -->
     <div id="pause-screen" class="overlay-screen hidden">
       <div class="panel-card">
         <div class="title-header">
           <div>
-            <h1 id="pause-title">TACTICAL SCOREBOARD</h1>
-            <div class="subtitle" id="pause-subtitle">SORTIE IN PROGRESS // TEAM BLUE VS TEAM RED</div>
+            <h1 id="pause-title">LIVE SERVER LEADERBOARD</h1>
+            <div class="subtitle" id="pause-subtitle">FFA ARENA // TOP SCORE &amp; SURVIVAL STANDINGS</div>
           </div>
-          <div id="team-score-banner" style="font-size:16px;font-weight:800;font-family:monospace;">BLUE 5 - 5 RED</div>
+          <div id="team-score-banner" style="font-size:14px;font-weight:800;font-family:monospace;color:#38bdf8;">HIGH SCORE: 0</div>
         </div>
 
         <div style="max-height:46vh;overflow-y:auto;">
           <table class="score-table">
             <thead>
               <tr>
-                <th>Callsign</th>
-                <th>Team</th>
-                <th>Aircraft</th>
-                <th>AI State / Role</th>
-                <th>HP</th>
-                <th>Kills</th>
-                <th>Deaths</th>
+                <th>#</th>
+                <th>Pilot</th>
+                <th>Jet</th>
+                <th>Score</th>
+                <th>K / D</th>
+                <th>Lives</th>
+                <th>Ping</th>
                 <th>Status</th>
               </tr>
             </thead>
@@ -833,44 +889,47 @@
 
         <div class="launch-row" id="pause-buttons-row">
           <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <button id="btn-resume" class="primary-btn">RESUME FLIGHT</button>
-            <button id="btn-restart" class="secondary-btn">RESTART SORTIE</button>
-            <button id="btn-return-menu" class="secondary-btn">CHANGE LOADOUT</button>
+            <button id="btn-resume" class="primary-btn">RETURN TO FLIGHT</button>
+            <button id="btn-restart" class="secondary-btn">RE-DEPLOY NEW RUN</button>
+            <button id="btn-return-menu" class="secondary-btn">DISCONNECT</button>
           </div>
-          <div style="font-size:11.5px;color:#94a3b8;">Tap <b>TAB</b> or <b>P</b> to resume</div>
+          <div style="font-size:11.5px;color:#94a3b8;">Tap <b>TAB</b> or <b>P</b> to close</div>
         </div>
       </div>
     </div>
 
-    <!-- RESULTS / DEBRIEFING OVERLAY -->
+    <!-- RESULTS / RUN ENDED OVERLAY -->
     <div id="results-screen" class="overlay-screen hidden">
       <div class="panel-card">
         <div class="title-header">
           <div>
-            <h1 id="result-headline">MISSION ACCOMPLISHED</h1>
-            <div class="subtitle" id="result-subline">ALL HOSTILE AIRCRAFT ELIMINATED</div>
+            <h1 id="result-headline">RUN TERMINATED // 0 LIVES LEFT</h1>
+            <div class="subtitle" id="result-subline">YOUR SCORE WAS DROPPED AS NEON LOOT ORBS</div>
           </div>
-          <div id="result-team-standing" style="font-size:16px;font-weight:800;font-family:monospace;"></div>
+          <div id="result-team-standing" style="font-size:15px;font-weight:800;font-family:monospace;color:#fbbf24;"></div>
         </div>
 
         <div class="stats-summary-grid">
-          <div class="stat-box"><div class="val" id="res-kills">0</div><div class="lbl">Player Kills</div></div>
-          <div class="stat-box"><div class="val" id="res-deaths">0</div><div class="lbl">Player Deaths</div></div>
+          <div class="stat-box"><div class="val" id="res-score">0</div><div class="lbl">Run Score</div></div>
+          <div class="stat-box"><div class="val" id="res-best">0</div><div class="lbl">Personal Best</div></div>
+          <div class="stat-box"><div class="val" id="res-kills">0</div><div class="lbl">Kills</div></div>
+          <div class="stat-box"><div class="val" id="res-deaths">0</div><div class="lbl">Deaths</div></div>
           <div class="stat-box"><div class="val" id="res-accuracy">0%</div><div class="lbl">Gun Accuracy</div></div>
-          <div class="stat-box"><div class="val" id="res-missiles">0 / 0</div><div class="lbl">Missiles Hit/Fired</div></div>
-          <div class="stat-box"><div class="val" id="res-time">00:00</div><div class="lbl">Sortie Time</div></div>
+          <div class="stat-box"><div class="val" id="res-time">00:00</div><div class="lbl">Survival Time</div></div>
         </div>
 
         <div style="max-height:36vh;overflow-y:auto;">
           <table class="score-table">
             <thead>
               <tr>
-                <th>Callsign</th>
-                <th>Team</th>
-                <th>Aircraft</th>
-                <th>Kills</th>
-                <th>Deaths</th>
-                <th>Final Status</th>
+                <th>#</th>
+                <th>Pilot</th>
+                <th>Jet</th>
+                <th>Score</th>
+                <th>K / D</th>
+                <th>Lives</th>
+                <th>Ping</th>
+                <th>Status</th>
               </tr>
             </thead>
             <tbody id="results-table-body"></tbody>
@@ -879,18 +938,17 @@
 
         <div class="launch-row">
           <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <button id="btn-respawn-now" class="secondary-btn hidden">RESPAWN IN WINGMAN</button>
-            <button id="btn-spectate-now" class="secondary-btn hidden">SPECTATE BATTLE</button>
+            <button id="btn-respawn-now" class="secondary-btn hidden">RESPAWN</button>
+            <button id="btn-spectate-now" class="secondary-btn">SPECTATE ARENA</button>
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <button id="btn-play-again" class="primary-btn">FLY AGAIN ▶</button>
-            <button id="btn-results-menu" class="secondary-btn">MAIN HANGAR</button>
+            <button id="btn-play-again" class="primary-btn">RE-DEPLOY (3 LIVES) ▶</button>
+            <button id="btn-results-menu" class="secondary-btn">LOBBY</button>
           </div>
         </div>
       </div>
     </div>
   </div>
-
   <script>
   'use strict';
 
@@ -1025,6 +1083,39 @@
         missileCooldownMult: 0.85,
         maxSpeedUse: 1.00
       }
+    },
+    LIVERIES: [
+      { name: 'Cyber Emerald', body: 0x263445, dark: 0x151e29, trim: 0x00ff9d, abOuter: 0x00ff9d, abInner: 0xa7f3d0 },
+      { name: 'Ion Cyan',      body: 0x2b394f, dark: 0x172030, trim: 0x38bdf8, abOuter: 0x38bdf8, abInner: 0xe0f2fe },
+      { name: 'Crimson Nova',  body: 0x3a242b, dark: 0x1f1216, trim: 0xff3b47, abOuter: 0xff4757, abInner: 0xfde047 },
+      { name: 'Plasma Violet', body: 0x2e2344, dark: 0x191229, trim: 0xd946ef, abOuter: 0xc026d3, abInner: 0xf5d0fe },
+      { name: 'Solar Gold',    body: 0x383226, dark: 0x211d15, trim: 0xfbbf24, abOuter: 0xf97316, abInner: 0xfef08a },
+      { name: 'Blood Moon',    body: 0x1e242b, dark: 0x11151c, trim: 0xf43f5e, abOuter: 0xe11d48, abInner: 0xffedd5 }
+    ],
+    PERSONALITIES: [
+      { id: 'SNIPER',     prefAltMin: 1350, prefAltMax: 2400, engageDist: 2500, orbWeight: 0.55, aggroWeight: 0.85, gunCommit: 0.65 },
+      { id: 'DOGFIGHTER', prefAltMin: 650,  prefAltMax: 1350, engageDist: 1400, orbWeight: 0.40, aggroWeight: 1.25, gunCommit: 1.00 },
+      { id: 'AMBUSHER',   prefAltMin: 260,  prefAltMax: 750,  engageDist: 1650, orbWeight: 0.70, aggroWeight: 0.95, gunCommit: 0.85 },
+      { id: 'CHASER',     prefAltMin: 550,  prefAltMax: 1550, engageDist: 2100, orbWeight: 0.25, aggroWeight: 1.35, gunCommit: 0.95 },
+      { id: 'SURVIVOR',   prefAltMin: 800,  prefAltMax: 1750, engageDist: 1500, orbWeight: 1.45, aggroWeight: 0.60, gunCommit: 0.70 }
+    ],
+    PILOT_NAMES: [
+      'rishi_07', 'ViperActual', 'KuroNeko', 'arjun_x', 'Sokol_57', 'Ghost_IN',
+      'zayd_k', 'Maverick88', 'NachtFalke', 'tango_down', 'dev_null', 'SkyReaper',
+      'kabir_99', ' ZeroTwo', 'ApexPred', 'raijin_jp', ' shadow_fox', 'IceMan_US',
+      'vikram_s', ' Fenrir', 'StormCrow', 'blitz_krg', 'NovaStrike', 'lynx_04',
+      'rohan_mk2', 'ZephyrX', ' Valiant', 'draco_7', 'RedBaron_', 'kestrel_1'
+    ],
+    ORBS: {
+      maxSkyOrbs: 48,
+      spawnInterval: 0.65,
+      fallSpeedMin: 14,
+      fallSpeedMax: 24,
+      pickupRadius: 34,
+      baseScore: 50,
+      baseHeal: 18,
+      lootOrbScore: 100,
+      lootOrbHeal: 25
     }
   };
 
@@ -1233,6 +1324,18 @@
       subGain.connect(this.masterGain);
       sub.start(now);
       sub.stop(now + 0.5);
+    }
+
+    playOrbPickup() {
+      if (!this.initialized || this.muted) return;
+      this.playTone(660, 0.09, 'sine', 0.14);
+      setTimeout(() => this.playTone(990, 0.14, 'triangle', 0.16), 55);
+    }
+
+    playArmageddonSiren() {
+      if (!this.initialized || this.muted) return;
+      this.playTone(320, 0.35, 'sawtooth', 0.18);
+      setTimeout(() => this.playTone(480, 0.45, 'sawtooth', 0.18), 360);
     }
 
     playFlarePop() {
@@ -1604,16 +1707,17 @@
     constructor(scene) {
       this.scene = scene;
       this.clouds = [];
+      this.orbs = [];
+      this.orbSpawnTimer = 0;
       this.oceanMesh = null;
       this.buildLightingAndSky();
       this.buildTerrainAndOcean();
       this.buildVolumetricClouds();
+      this.initOrbs();
     }
 
-    // Deterministic multi-octave height function used by both terrain mesh & collision checks
     getTerrainHeight(x, z) {
       const distFromCenter = Math.sqrt(x * x + z * z);
-      // Keep central ocean & island archipelago playable
       const islandMask = Math.max(0, 1.0 - distFromCenter / 6800);
       const n1 = Math.sin(x * 0.00075 + 0.4) * Math.cos(z * 0.00075 - 0.2);
       const n2 = Math.sin(x * 0.0019 - z * 0.0014 + 1.7) * 0.5;
@@ -1624,25 +1728,26 @@
     }
 
     buildLightingAndSky() {
-      this.scene.fog = new THREE.FogExp2(0x6e9bc5, 0.000095);
+      // Nightfall atmospheric fog
+      this.scene.fog = new THREE.FogExp2(0x060d1f, 0.000085);
 
-      const hemiLight = new THREE.HemisphereLight(0xbbe1ff, 0x263849, 0.85);
+      const hemiLight = new THREE.HemisphereLight(0x3b5998, 0x080d1a, 0.78);
       this.scene.add(hemiLight);
 
-      const sunLight = new THREE.DirectionalLight(0xfff4dd, 1.25);
-      sunLight.position.set(4000, 5500, -3500);
-      this.scene.add(sunLight);
+      const moonLight = new THREE.DirectionalLight(0xa5c8ff, 1.05);
+      moonLight.position.set(3800, 5200, -3600);
+      this.scene.add(moonLight);
 
-      // Gradient Sky Dome Shader
+      // Night Sky Dome Shader with procedural starfield, midnight horizon, and glowing moon
       const skyGeo = new THREE.SphereGeometry(13500, 32, 20);
       const skyMat = new THREE.ShaderMaterial({
         side: THREE.BackSide,
         depthWrite: false,
         uniforms: {
-          topColor: { value: new THREE.Color(0x0b2548) },
-          midColor: { value: new THREE.Color(0x3a7bd5) },
-          horizonColor: { value: new THREE.Color(0x9ad0f5) },
-          sunDir: { value: sunLight.position.clone().normalize() }
+          topColor: { value: new THREE.Color(0x02040a) },
+          midColor: { value: new THREE.Color(0x09152e) },
+          horizonColor: { value: new THREE.Color(0x162b52) },
+          sunDir: { value: moonLight.position.clone().normalize() }
         },
         vertexShader: `
           varying vec3 vWorldPos;
@@ -1658,14 +1763,27 @@
           uniform vec3 horizonColor;
           uniform vec3 sunDir;
           varying vec3 vWorldPos;
+          float hash(vec3 p) {
+            p = fract(p * 0.3183099 + 0.1);
+            p *= 17.0;
+            return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
+          }
           void main() {
             vec3 dir = normalize(vWorldPos);
             float h = clamp(dir.y, 0.0, 1.0);
-            vec3 col = mix(horizonColor, midColor, smoothstep(0.0, 0.28, h));
-            col = mix(col, topColor, smoothstep(0.28, 0.88, h));
-            float sunAmt = max(dot(dir, sunDir), 0.0);
-            col += vec3(1.0, 0.9, 0.7) * pow(sunAmt, 36.0) * 0.45;
-            col += vec3(1.0, 0.98, 0.9) * smoothstep(0.9985, 0.9998, sunAmt);
+            vec3 col = mix(horizonColor, midColor, smoothstep(0.0, 0.25, h));
+            col = mix(col, topColor, smoothstep(0.25, 0.85, h));
+            // Procedural stars in upper hemisphere
+            if (h > 0.08) {
+              float s = hash(floor(dir * 380.0));
+              if (s > 0.9965) {
+                col += vec3(0.75, 0.88, 1.0) * ((s - 0.9965) / 0.0035) * smoothstep(0.08, 0.3, h);
+              }
+            }
+            // Moon glow + crisp lunar disc
+            float moonAmt = max(dot(dir, sunDir), 0.0);
+            col += vec3(0.25, 0.55, 0.95) * pow(moonAmt, 28.0) * 0.45;
+            col += vec3(0.92, 0.96, 1.0) * smoothstep(0.9982, 0.9995, moonAmt);
             gl_FragColor = vec4(col, 1.0);
           }
         `
@@ -1675,7 +1793,6 @@
     }
 
     buildTerrainAndOcean() {
-      // Procedural Island & Mountain Heightmap with Vertex Colors
       const segs = 120;
       const size = CONFIG.WORLD.size;
       const terrainGeo = new THREE.PlaneGeometry(size, size, segs, segs);
@@ -1692,20 +1809,16 @@
 
         let r, g, b;
         if (h < 2) {
-          // Submerged sand / coastal shoal
-          r = 0.16; g = 0.35; b = 0.42;
+          r = 0.05; g = 0.14; b = 0.24;
         } else if (h < 18) {
-          // Coastal beach sand
-          r = 0.76; g = 0.70; b = 0.52;
+          r = 0.16; g = 0.22; b = 0.30;
         } else if (h < 115) {
-          // Lush island forest green
-          r = 0.18; g = 0.42; b = 0.22;
+          r = 0.07; g = 0.19; b = 0.18;
         } else if (h < 235) {
-          // Alpine granite rock
-          r = 0.38; g = 0.40; b = 0.42;
+          r = 0.15; g = 0.18; b = 0.26;
         } else {
-          // Snow-dusted mountain peaks
-          r = 0.88; g = 0.92; b = 0.96;
+          // Moonlit snow/ice peaks with subtle cyan tint
+          r = 0.45; g = 0.62; b = 0.82;
         }
         colors[i * 3] = r;
         colors[i * 3 + 1] = g;
@@ -1722,16 +1835,15 @@
       this.terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
       this.scene.add(this.terrainMesh);
 
-      // Ocean Surface Plane with subtle procedural wave shimmer
       const oceanGeo = new THREE.PlaneGeometry(size * 1.4, size * 1.4, 48, 48);
       oceanGeo.rotateX(-Math.PI / 2);
       const oceanMat = new THREE.MeshPhongMaterial({
-        color: 0x0b4870,
-        emissive: 0x041b2e,
-        specular: 0x66b2ff,
-        shininess: 65,
+        color: 0x041529,
+        emissive: 0x020914,
+        specular: 0x38bdf8,
+        shininess: 80,
         transparent: true,
-        opacity: 0.92
+        opacity: 0.94
       });
       this.oceanMesh = new THREE.Mesh(oceanGeo, oceanMat);
       this.oceanMesh.position.y = CONFIG.WORLD.seaLevel;
@@ -1739,15 +1851,14 @@
     }
 
     buildVolumetricClouds() {
-      // Generate soft radial puff texture in code on an offscreen canvas
       const c = document.createElement('canvas');
       c.width = 128;
       c.height = 128;
       const ctx = c.getContext('2d');
       const grad = ctx.createRadialGradient(64, 64, 8, 64, 64, 60);
-      grad.addColorStop(0.0, 'rgba(255, 255, 255, 0.78)');
-      grad.addColorStop(0.45, 'rgba(240, 248, 255, 0.42)');
-      grad.addColorStop(1.0, 'rgba(215, 232, 250, 0.0)');
+      grad.addColorStop(0.0, 'rgba(70, 110, 165, 0.38)');
+      grad.addColorStop(0.45, 'rgba(35, 65, 115, 0.20)');
+      grad.addColorStop(1.0, 'rgba(15, 30, 60, 0.0)');
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, 128, 128);
 
@@ -1756,7 +1867,7 @@
         map: cloudTex,
         transparent: true,
         depthWrite: false,
-        opacity: 0.65
+        opacity: 0.55
       });
 
       this.cloudGroup = new THREE.Group();
@@ -1785,12 +1896,186 @@
       this.scene.add(this.cloudGroup);
     }
 
+    initOrbs() {
+      // Procedural glowing neon halo sprite texture for falling orbs
+      const c = document.createElement('canvas');
+      c.width = 64;
+      c.height = 64;
+      const ctx = c.getContext('2d');
+      const g = ctx.createRadialGradient(32, 32, 2, 32, 32, 30);
+      g.addColorStop(0.0, 'rgba(255, 255, 255, 1.0)');
+      g.addColorStop(0.35, 'rgba(0, 255, 200, 0.85)');
+      g.addColorStop(0.7, 'rgba(56, 189, 248, 0.35)');
+      g.addColorStop(1.0, 'rgba(0, 0, 0, 0.0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, 64, 64);
+      this.orbTex = new THREE.CanvasTexture(c);
+
+      this.orbGeo = new THREE.OctahedronGeometry(6.5, 1);
+      this.orbColors = [0x00ff9d, 0x38bdf8, 0xd946ef, 0xfbbf24, 0xff3b47];
+
+      // Pre-populate sky with falling neon orbs
+      for (let i = 0; i < CONFIG.ORBS.maxSkyOrbs; i++) {
+        this.spawnSkyOrb(true);
+      }
+    }
+
+    spawnSkyOrb(randomAlt = false) {
+      if (this.orbs.length >= CONFIG.ORBS.maxSkyOrbs + 35) return;
+      const colHex = this.orbColors[Math.floor(Math.random() * this.orbColors.length)];
+      const x = (Math.random() - 0.5) * 7600;
+      const z = (Math.random() - 0.5) * 7600;
+      const y = randomAlt ? (320 + Math.random() * 1900) : (1850 + Math.random() * 650);
+      const fallSpeed = CONFIG.ORBS.fallSpeedMin + Math.random() * (CONFIG.ORBS.fallSpeedMax - CONFIG.ORBS.fallSpeedMin);
+      this.createOrbEntity(
+        new THREE.Vector3(x, y, z),
+        new THREE.Vector3(0, -fallSpeed, 0),
+        colHex,
+        CONFIG.ORBS.baseScore,
+        CONFIG.ORBS.baseHeal,
+        1.0
+      );
+    }
+
+    spawnDeathLootOrbs(pos, victimScore) {
+      // Release glowing neon orbs proportional to dead player's score
+      const count = Math.max(3, Math.min(14, 3 + Math.floor(victimScore / 120)));
+      const totalLootScore = Math.max(150, Math.round(victimScore * 0.65));
+      const scorePerOrb = Math.max(50, Math.round(totalLootScore / count));
+
+      for (let i = 0; i < count; i++) {
+        const scatter = new THREE.Vector3(
+          (Math.random() - 0.5) * 90,
+          (Math.random() - 0.2) * 55,
+          (Math.random() - 0.5) * 90
+        );
+        const spawnPos = pos.clone().add(scatter);
+        spawnPos.y = Math.max(120, spawnPos.y);
+        const vel = new THREE.Vector3(
+          scatter.x * 0.35,
+          -12 - Math.random() * 8,
+          scatter.z * 0.35
+        );
+        this.createOrbEntity(
+          spawnPos,
+          vel,
+          0xfbbf24, // Bright gold/amber high-value death loot orbs
+          scorePerOrb,
+          CONFIG.ORBS.lootOrbHeal,
+          1.45
+        );
+      }
+    }
+
+    createOrbEntity(pos, vel, colorHex, scoreVal, healVal, scaleMult = 1.0) {
+      const group = new THREE.Group();
+      group.position.copy(pos);
+
+      const coreMat = new THREE.MeshBasicMaterial({
+        color: colorHex,
+        wireframe: false
+      });
+      const core = new THREE.Mesh(this.orbGeo, coreMat);
+      core.scale.setScalar(scaleMult);
+      group.add(core);
+
+      const haloMat = new THREE.SpriteMaterial({
+        map: this.orbTex,
+        color: colorHex,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+      const halo = new THREE.Sprite(haloMat);
+      halo.scale.setScalar(42 * scaleMult);
+      group.add(halo);
+
+      this.scene.add(group);
+      this.orbs.push({
+        group,
+        core,
+        halo,
+        vel,
+        scoreVal,
+        healVal,
+        colorHex,
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+
+    updateOrbs(dt, aircraftList, particles, audio, onOrbCollected) {
+      this.orbSpawnTimer += dt;
+      if (this.orbSpawnTimer >= CONFIG.ORBS.spawnInterval) {
+        this.orbSpawnTimer = 0;
+        if (this.orbs.length < CONFIG.ORBS.maxSkyOrbs) {
+          this.spawnSkyOrb(false);
+        }
+      }
+
+      const pickupSq = CONFIG.ORBS.pickupRadius * CONFIG.ORBS.pickupRadius;
+
+      for (let i = this.orbs.length - 1; i >= 0; i--) {
+        const o = this.orbs[i];
+        o.phase += dt * 3.5;
+        o.group.position.addScaledVector(o.vel, dt);
+        // Gentle horizontal drift & pulse
+        o.vel.x *= Math.pow(0.5, dt);
+        o.vel.z *= Math.pow(0.5, dt);
+        o.core.rotation.y += dt * 2.2;
+        o.core.rotation.x += dt * 1.4;
+        const pulse = 38 + Math.sin(o.phase) * 8;
+        o.halo.scale.set(pulse, pulse, 1);
+
+        // Check ground/ocean destruction
+        const groundY = Math.max(CONFIG.WORLD.seaLevel, this.getTerrainHeight(o.group.position.x, o.group.position.z));
+        if (o.group.position.y <= groundY + 4) {
+          if (particles) {
+            particles.spawnParticle(o.group.position, new THREE.Vector3(0, 8, 0), o.colorHex, 4, 18, 0.45, true);
+          }
+          this.scene.remove(o.group);
+          this.orbs.splice(i, 1);
+          continue;
+        }
+
+        // Check collection by any living pilot
+        let collectedBy = null;
+        for (const ac of aircraftList) {
+          if (!ac.alive) continue;
+          if (ac.mesh.position.distanceToSquared(o.group.position) <= pickupSq) {
+            collectedBy = ac;
+            break;
+          }
+        }
+
+        if (collectedBy) {
+          collectedBy.hp = Math.min(collectedBy.stats.maxHp, collectedBy.hp + o.healVal);
+          collectedBy.score += o.scoreVal;
+          if (collectedBy.isPlayer && audio) {
+            audio.playOrbPickup();
+          }
+          if (particles) {
+            particles.spawnParticle(o.group.position, collectedBy.flight.velocity.clone().multiplyScalar(0.2), o.colorHex, 5, 22, 0.35, true);
+          }
+          if (onOrbCollected) {
+            onOrbCollected(collectedBy, o);
+          }
+          this.scene.remove(o.group);
+          this.orbs.splice(i, 1);
+        }
+      }
+    }
+
+    clearOrbs() {
+      for (const o of this.orbs) {
+        this.scene.remove(o.group);
+      }
+      this.orbs = [];
+    }
+
     update(cameraPos) {
-      // Keep sky dome centered on camera
       if (this.skyDome && cameraPos) {
         this.skyDome.position.copy(cameraPos);
       }
-      // Distance-cull far cloud clusters for steady 60 FPS
       if (cameraPos) {
         for (let i = 0; i < this.clouds.length; i++) {
           const cl = this.clouds[i];
@@ -1817,7 +2102,7 @@
       return new THREE.Mesh(geo, material);
     }
 
-    static createAircraftMesh(typeId) {
+    static createAircraftMesh(typeId, liveryIndex = 0) {
       const root = new THREE.Group();
       const hiDetail = new THREE.Group();
       const loDetail = new THREE.Group();
@@ -1825,20 +2110,21 @@
       root.add(loDetail);
 
       const isF22 = typeId === 'F22';
+      const liv = CONFIG.LIVERIES[liveryIndex % CONFIG.LIVERIES.length] || CONFIG.LIVERIES[0];
       const bodyMat = new THREE.MeshStandardMaterial({
-        color: isF22 ? 0x737e8c : 0x3b4946,
-        roughness: 0.45,
-        metalness: 0.35,
+        color: liv.body,
+        roughness: 0.42,
+        metalness: 0.45,
         flatShading: true
       });
       const darkMat = new THREE.MeshStandardMaterial({
-        color: isF22 ? 0x4b5563 : 0x242f2d,
-        roughness: 0.55,
-        metalness: 0.4,
+        color: liv.dark,
+        roughness: 0.5,
+        metalness: 0.45,
         flatShading: true
       });
       const teamMat = new THREE.MeshBasicMaterial({
-        color: isF22 ? 0x1d9bf0 : 0xff2e43
+        color: liv.trim
       });
       const canopyMat = new THREE.MeshPhongMaterial({
         color: isF22 ? 0xd99b26 : 0x225577,
@@ -1947,7 +2233,7 @@
         hiDetail.add(lNoz, rNoz);
 
         // Dual Afterburner plumes
-        this.addAfterburnerCones(abGroup, -0.58, 0.58, 5.2, 0x38bdf8, 0xffaa33);
+        this.addAfterburnerCones(abGroup, -0.58, 0.58, 5.2, liv.abOuter, liv.abInner);
       } else {
         // --- SU-57 FELON: Wide blended body, more swept wings, large tailplanes, wide-set twin engines ---
         // Sleek flattened nose + LEVCON root extensions
@@ -2047,7 +2333,7 @@
         hiDetail.add(lNoz, rNoz);
 
         // Dual Afterburner plumes set wide apart
-        this.addAfterburnerCones(abGroup, -1.12, 1.12, 5.8, 0xff5522, 0xffcc44);
+        this.addAfterburnerCones(abGroup, -1.12, 1.12, 5.8, liv.abOuter, liv.abInner);
       }
 
       root.add(abGroup);
@@ -2594,13 +2880,14 @@
         b.vel.y -= bCfg.gravityDrop * dt;
         b.mesh.position.addScaledVector(b.vel, dt);
 
-        // Segment-sphere collision check against hostile aircraft
+        // Free-For-All segment-sphere collision check against all other aircraft
         let hit = false;
         for (const ac of aircraftList) {
-          if (!ac.alive || ac.team === b.owner.team) continue;
+          if (!ac.alive || ac === b.owner) continue;
           const distSq = this.pointToSegmentDistSq(ac.mesh.position, prevPos, b.mesh.position);
           if (distSq <= bCfg.hitRadius * bCfg.hitRadius) {
             hit = true;
+            b.owner.score += 15;
             if (b.owner.isPlayer) b.owner.cannonHits++;
             this.particles.spawnParticle(b.mesh.position, new THREE.Vector3(), 0xffcc44, 2.5, 9.0, 0.3, true);
             onDamageCallback(ac, b.owner, bCfg.damage, '20mm Cannon');
@@ -2682,6 +2969,7 @@
         if (!m.decoyFlare && m.target && m.target.alive) {
           const distToTarget = m.mesh.position.distanceTo(m.target.mesh.position);
           if (distToTarget <= mCfg.proximityRadius) {
+            m.owner.score += 60;
             if (m.owner.isPlayer) m.owner.missilesHit++;
             this.particles.spawnExplosion(m.mesh.position, 0.95);
             this.audio.playExplosion(m.mesh.position.distanceTo(m.owner.mesh.position));
@@ -2744,30 +3032,30 @@
    *   extending out of low-energy trouble.
    */
   class AIBotController {
-    constructor(aircraft, difficultyKey, wingIndex) {
+    constructor(aircraft, difficultyKey, personalityObj, wingIndex) {
       this.ac = aircraft;
       this.diff = CONFIG.AI_DIFFICULTY[difficultyKey] || CONFIG.AI_DIFFICULTY.NORMAL;
+      this.personality = personalityObj || CONFIG.PERSONALITIES[0];
       this.wingIndex = wingIndex;
       this.state = 'PATROL';
       this.maneuver = 'NONE';
       this.maneuverTimer = 0;
-      this.decisionTimer = Math.random() * 0.5;
-      this.calloutCooldown = 4.0 + Math.random() * 6.0;
+      this.decisionTimer = Math.random() * 0.4;
       this.scissorsDir = 1;
       this.aimPhase = Math.random() * Math.PI * 2;
+      this.targetOrb = null;
     }
 
-    update(dt, allAircraft, missiles, world, playerAc, addFeedMessage) {
+    update(dt, allAircraft, missiles, world) {
       this.decisionTimer -= dt;
       this.maneuverTimer -= dt;
-      this.calloutCooldown -= dt;
       this.aimPhase += dt * 2.1;
 
       const pos = this.ac.mesh.position;
       const vel = this.ac.flight.velocity;
       const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(this.ac.mesh.quaternion);
 
-      // 1. Check for incoming missiles targeting this bot
+      // 1. Check for incoming missiles targeting this pilot
       let incomingMissile = null;
       for (const m of missiles) {
         if (m.target === this.ac && !m.decoyFlare) {
@@ -2776,10 +3064,10 @@
         }
       }
 
-      // 2. Check Terrain & Collision Avoidance priority (`DISENGAGE` / Pull-Up)
+      // 2. Terrain & Collision Avoidance (`DISENGAGE` / Pull-Up)
       const lookAheadPos = pos.clone().addScaledVector(vel, 2.4);
       const groundH = Math.max(CONFIG.WORLD.seaLevel, world.getTerrainHeight(lookAheadPos.x, lookAheadPos.z));
-      const minSafeAlt = groundH + 155;
+      const minSafeAlt = groundH + 150;
 
       let collisionThreat = null;
       for (const other of allAircraft) {
@@ -2790,19 +3078,18 @@
         }
       }
 
-      // 3. State Transitions on Decision Tick
+      // 3. State Transitions on Decision Tick (Fixed personality & skill; never changes with score)
       if (pos.y < minSafeAlt || lookAheadPos.y < minSafeAlt || collisionThreat) {
         this.state = 'DISENGAGE';
       } else if (incomingMissile) {
         this.state = 'EVADE';
       } else if (this.decisionTimer <= 0) {
         this.decisionTimer = this.diff.reactionDelay * (0.85 + Math.random() * 0.3);
-        this.evaluateTacticalState(allAircraft, playerAc, addFeedMessage);
+        this.evaluateFFATargetsAndOrbs(allAircraft, world);
       }
 
-      // 4. Compute Desired Aim Point & Maneuver Target based on State
       let desiredDir = forward.clone();
-      let desiredThrottle = 0.72 * this.diff.maxSpeedUse || 0.78;
+      let desiredThrottle = 0.76 * this.diff.maxSpeedUse;
       let wantFireGun = false;
       let wantFireMissile = false;
       let wantFlare = false;
@@ -2810,7 +3097,6 @@
       const target = this.ac.target;
 
       if (this.state === 'DISENGAGE') {
-        // Pull up sharply away from terrain or collision partner
         if (collisionThreat) {
           desiredDir.subVectors(pos, collisionThreat.mesh.position).normalize();
           desiredDir.y = Math.max(0.45, desiredDir.y);
@@ -2820,7 +3106,6 @@
         }
         desiredThrottle = 1.0;
       } else if (this.state === 'EVADE') {
-        // Orthogonal break turn + flare deployment
         if (incomingMissile) {
           const toMissile = new THREE.Vector3().subVectors(incomingMissile.mesh.position, pos).normalize();
           const beamDir = new THREE.Vector3(-toMissile.z, 0.25 * Math.sin(this.aimPhase * 3), toMissile.x).normalize();
@@ -2832,46 +3117,39 @@
             wantFlare = true;
           }
         } else if (target && target.alive) {
-          // Break turn against bandit on our tail
           const toBandit = new THREE.Vector3().subVectors(target.mesh.position, pos).normalize();
           desiredDir.set(-toBandit.z, 0.3, toBandit.x).normalize();
           desiredThrottle = 0.95;
         } else {
-          this.state = 'DETECT';
+          this.state = 'PATROL';
         }
+      } else if (this.state === 'COLLECT_ORB' && this.targetOrb && world.orbs.indexOf(this.targetOrb) !== -1) {
+        desiredDir.subVectors(this.targetOrb.group.position, pos).normalize();
+        desiredThrottle = 0.88;
       } else if (this.state === 'PATROL' || !target || !target.alive) {
-        // Fly in wingman formation with team leader (or orbit central airspace)
-        const leader = this.findFormationLeader(allAircraft, playerAc);
-        if (leader && leader !== this.ac) {
-          const side = (this.wingIndex % 2 === 0 ? 1 : -1) * (65 + this.wingIndex * 28);
-          const back = 55 + this.wingIndex * 25;
-          const lRight = new THREE.Vector3(1, 0, 0).applyQuaternion(leader.mesh.quaternion);
-          const lBack = new THREE.Vector3(0, 0, 1).applyQuaternion(leader.mesh.quaternion);
-          const formSlot = leader.mesh.position.clone()
-            .addScaledVector(lRight, side)
-            .addScaledVector(lBack, back);
-          formSlot.y = Math.max(450, formSlot.y);
-          const toSlot = new THREE.Vector3().subVectors(formSlot, pos);
-          const slotDist = toSlot.length();
-          if (slotDist > 40) {
-            desiredDir.copy(toSlot.normalize());
-            desiredThrottle = Math.min(1.0, 0.65 + (slotDist / 600) * 0.35);
-          } else {
-            desiredDir.copy(new THREE.Vector3(0, 0, -1).applyQuaternion(leader.mesh.quaternion));
-            desiredThrottle = leader.flight.throttle;
-          }
-        } else {
-          // Orbit patrol ring
-          const angle = Math.atan2(pos.z, pos.x) + 0.35;
-          const wp = new THREE.Vector3(Math.cos(angle) * 1800, 950, Math.sin(angle) * 1800);
-          desiredDir.subVectors(wp, pos).normalize();
-          desiredThrottle = 0.68;
-        }
+        // Orbit in this pilot's preferred altitude band
+        const prefAlt = 0.5 * (this.personality.prefAltMin + this.personality.prefAltMax);
+        const angle = Math.atan2(pos.z, pos.x) + 0.45;
+        const radius = 1400 + (this.wingIndex % 4) * 380;
+        const wp = new THREE.Vector3(Math.cos(angle) * radius, prefAlt, Math.sin(angle) * radius);
+        desiredDir.subVectors(wp, pos).normalize();
+        desiredThrottle = 0.72;
       } else if (this.state === 'ENGAGE') {
-        // High-speed closing intercept toward target
         const leadInfo = WeaponsManager.computeLeadPosition(pos, vel, target.mesh.position, target.flight.velocity);
-        desiredDir.subVectors(leadInfo.leadPos, pos).normalize();
+        const aimPt = leadInfo.leadPos.clone();
+        // Snipers bias slightly higher altitude during approach
+        if (this.personality.id === 'SNIPER' && pos.y < this.personality.prefAltMin) {
+          aimPt.y += 280;
+        }
+        desiredDir.subVectors(aimPt, pos).normalize();
         desiredThrottle = 0.95;
+        if (
+          this.ac.lockState.isLocked &&
+          this.ac.missileCooldown <= 0 &&
+          Math.random() < this.diff.aggressiveness * dt * 2.5
+        ) {
+          wantFireMissile = true;
+        }
       } else if (this.state === 'ATTACK') {
         const toTarget = new THREE.Vector3().subVectors(target.mesh.position, pos);
         const dist = toTarget.length();
@@ -2879,44 +3157,35 @@
         const targetForward = new THREE.Vector3(0, 0, -1).applyQuaternion(target.mesh.quaternion);
         const aspectDot = forward.dot(targetForward);
 
-        // Select a tactical BFM maneuver when appropriate
         if (this.maneuverTimer <= 0) {
           this.selectDogfightManeuver(dist, aspectDot, pos.y);
         }
 
         if (this.maneuver === 'HIGH_YO_YO') {
-          // Pitch up above target to bleed excess closure speed and preserve angle
           const highPt = target.mesh.position.clone().add(new THREE.Vector3(0, 220, 0));
           desiredDir.subVectors(highPt, pos).normalize();
           desiredThrottle = 0.65;
         } else if (this.maneuver === 'LOW_YO_YO') {
-          // Nose low to build airspeed and cut inside turn radius
           const lowPt = target.mesh.position.clone().add(new THREE.Vector3(0, -140, 0));
           desiredDir.subVectors(lowPt, pos).normalize();
           desiredThrottle = 1.0;
         } else if (this.maneuver === 'SCISSORS') {
-          // S-turn bank reversals when close & parallel
           this.scissorsDir = Math.sin(this.aimPhase * 1.8) >= 0 ? 1 : -1;
           const sideVec = new THREE.Vector3(-dirToTarget.z * this.scissorsDir, 0.1, dirToTarget.x * this.scissorsDir);
           desiredDir.copy(dirToTarget).addScaledVector(sideVec, 0.65).normalize();
           desiredThrottle = 0.55;
         } else if (this.maneuver === 'SPLIT_S' && pos.y > 900) {
-          // Dive & reverse
           desiredDir.set(-forward.x, -0.75, -forward.z).normalize();
           desiredThrottle = 0.6;
         } else if (this.maneuver === 'IMMELMANN') {
-          // Climb steep & reverse over the top
           desiredDir.set(-forward.x, 0.8, -forward.z).normalize();
           desiredThrottle = 1.0;
-        } else if (dist < 290 && vel.length() > target.flight.speed * 1.08) {
-          // LAG PURSUIT: Aim behind target tail to prevent overshooting at close range
+        } else if (dist < 280 && vel.length() > target.flight.speed * 1.08) {
           const lagPt = target.mesh.position.clone().addScaledVector(targetForward, -85);
           desiredDir.subVectors(lagPt, pos).normalize();
           desiredThrottle = 0.42;
         } else {
-          // LEAD PURSUIT: Aim at computed gunnery lead point
           const lead = WeaponsManager.computeLeadPosition(pos, vel, target.mesh.position, target.flight.velocity);
-          // Apply smooth aim error scaled by difficulty
           const err = this.diff.aimErrorRad;
           desiredDir.subVectors(lead.leadPos, pos).normalize();
           desiredDir.x += Math.sin(this.aimPhase * 1.7) * err;
@@ -2925,7 +3194,6 @@
           desiredThrottle = dist > 900 ? 0.95 : 0.78;
         }
 
-        // Weapons Firing Logic (Obeys lock-on cone & range)
         const angleToAim = forward.angleTo(desiredDir);
         if (dist < 1450 && angleToAim < 0.13 + this.diff.aimErrorRad) {
           wantFireGun = true;
@@ -2939,26 +3207,21 @@
         }
       }
 
-      // 5. Convert Desired 3D Direction Vector into Pitch, Roll, Yaw Flight Controls
       const localDir = desiredDir.clone().applyQuaternion(this.ac.mesh.quaternion.clone().invert());
       let rollCmd = 0;
       let pitchCmd = 0;
       let yawCmd = 0;
 
-      // Bank toward target in local XY plane
       const targetAngleRoll = Math.atan2(localDir.x, localDir.y);
       if (Math.abs(localDir.x) > 0.04 || localDir.z > 0) {
         rollCmd = Math.max(-1, Math.min(1, targetAngleRoll * 2.2));
       } else {
-        // Nearly aligned: wings-level stabilization + fine rudder yaw
         const rightWorld = new THREE.Vector3(1, 0, 0).applyQuaternion(this.ac.mesh.quaternion);
         rollCmd = Math.max(-1, Math.min(1, -rightWorld.y * 1.6));
       }
 
-      // Pull pitch once reasonably rolled toward target
       pitchCmd = Math.max(-1, Math.min(1, localDir.y * 3.2 * this.diff.turnCommit));
       if (localDir.z > 0 && Math.abs(localDir.y) < 0.25) {
-        // Target is behind us: pull hard positive G in break turn
         pitchCmd = this.diff.turnCommit;
       }
 
@@ -2979,14 +3242,14 @@
       };
     }
 
-    evaluateTacticalState(allAircraft, playerAc, addFeedMessage) {
+    evaluateFFATargetsAndOrbs(allAircraft, world) {
       const pos = this.ac.mesh.position;
 
-      // Check if an enemy is right on our tail
+      // 1. Check if someone is right on our six o'clock
       for (const other of allAircraft) {
-        if (!other.alive || other.team === this.ac.team) continue;
+        if (!other.alive || other === this.ac) continue;
         const d = pos.distanceTo(other.mesh.position);
-        if (d < 750 && other.target === this.ac) {
+        if (d < 720 && other.target === this.ac) {
           const otherFwd = new THREE.Vector3(0, 0, -1).applyQuaternion(other.mesh.quaternion);
           const toUs = new THREE.Vector3().subVectors(pos, other.mesh.position).normalize();
           if (otherFwd.dot(toUs) > 0.85 && Math.random() < this.diff.aggressiveness) {
@@ -2997,32 +3260,57 @@
         }
       }
 
-      // Target Selection: Friendly bots actively protect the player if an enemy is tailing the player!
+      // 2. Check nearby Neon Orbs if damaged or personality favors orb hunting
+      const hpNeed = (100 - this.ac.hp) / 100;
+      const orbDesire = this.personality.orbWeight + hpNeed * 1.6;
+      if (world && world.orbs.length > 0 && orbDesire > 0.65) {
+        let bestOrb = null;
+        let bestOrbDist = 1100 * orbDesire;
+        for (const o of world.orbs) {
+          if (o.group.position.y < 140) continue;
+          const d = pos.distanceTo(o.group.position);
+          const weightedD = o.scoreVal >= 100 ? d * 0.55 : d; // Prioritize gold death-loot orbs!
+          if (weightedD < bestOrbDist) {
+            bestOrbDist = weightedD;
+            bestOrb = o;
+          }
+        }
+        if (bestOrb && (this.ac.hp < 65 || Math.random() < 0.45 * this.personality.orbWeight)) {
+          this.targetOrb = bestOrb;
+          this.state = 'COLLECT_ORB';
+          return;
+        }
+      }
+
+      // 3. Chaser personality keeps its existing target if still alive & within 3800m
+      if (
+        this.personality.id === 'CHASER' &&
+        this.ac.target &&
+        this.ac.target.alive &&
+        pos.distanceTo(this.ac.target.mesh.position) < 3800
+      ) {
+        this.state = pos.distanceTo(this.ac.target.mesh.position) > this.personality.engageDist ? 'ENGAGE' : 'ATTACK';
+        return;
+      }
+
+      // 4. Evaluate all living FFA opponents
       let bestTarget = null;
       let bestScore = Infinity;
 
       for (const other of allAircraft) {
-        if (!other.alive || other.team === this.ac.team) continue;
+        if (!other.alive || other === this.ac) continue;
         const dist = pos.distanceTo(other.mesh.position);
-        // Stealth signature reduces effective radar detection range
         const effectiveDist = dist / other.stats.radarSignature;
-        if (effectiveDist > 6800) continue;
+        if (effectiveDist > 7200) continue;
 
-        let score = effectiveDist * (0.85 + Math.random() * 0.35);
-
-        // Friendly wingman priority: cover the human player!
-        if (
-          playerAc &&
-          playerAc.alive &&
-          this.ac.team === playerAc.team &&
-          other.target === playerAc &&
-          other.mesh.position.distanceTo(playerAc.mesh.position) < 1600
-        ) {
-          score *= 0.32;
-          if (this.calloutCooldown <= 0 && addFeedMessage) {
-            this.calloutCooldown = 14.0 + Math.random() * 8.0;
-            addFeedMessage(`[${this.ac.callsign}] Engaging ${other.callsign} on your six, Lead!`, 'radio');
-          }
+        let score = effectiveDist * (0.82 + Math.random() * 0.36);
+        // Ambusher prefers damaged or low-altitude targets
+        if (this.personality.id === 'AMBUSHER' && other.hp < 60) {
+          score *= 0.6;
+        }
+        // Sniper prefers targets at medium-long missile range
+        if (this.personality.id === 'SNIPER' && dist > 1100 && dist < 2600) {
+          score *= 0.68;
         }
 
         if (score < bestScore) {
@@ -3036,12 +3324,12 @@
         this.state = 'PATROL';
       } else {
         const d = pos.distanceTo(bestTarget.mesh.position);
-        this.state = d > 1950 ? 'ENGAGE' : 'ATTACK';
+        this.state = d > this.personality.engageDist ? 'ENGAGE' : 'ATTACK';
       }
     }
 
     selectDogfightManeuver(dist, aspectDot, altitude) {
-      if (Math.random() > this.diff.aggressiveness) {
+      if (Math.random() > this.diff.aggressiveness * this.personality.gunCommit) {
         this.maneuver = 'LEAD_PURSUIT';
         this.maneuverTimer = 2.5;
         return;
@@ -3064,37 +3352,38 @@
         this.maneuverTimer = 2.2;
       }
     }
-
-    findFormationLeader(allAircraft, playerAc) {
-      if (playerAc && playerAc.alive && playerAc.team === this.ac.team) {
-        return playerAc;
-      }
-      for (const a of allAircraft) {
-        if (a.alive && a.team === this.ac.team) return a;
-      }
-      return null;
-    }
   }
 
   /* ============================================================================
-   * 10. AIRCRAFT ENTITY (Combines Mesh, FlightModel, Weapons State, Lock-On & AI)
+   * 10. AIRCRAFT ENTITY (FFA Pilot with 3 Lives, Score, Custom Livery & Ping)
    * ============================================================================
    */
   class Aircraft {
-    constructor(scene, typeId, callsign, isPlayer, difficultyKey, wingIndex) {
+    constructor(scene, typeId, callsign, isPlayer, difficultyKey, wingIndex, liveryIndex = 0, personalityObj = null) {
       this.scene = scene;
       this.stats = CONFIG.AIRCRAFT[typeId];
       this.typeId = typeId;
-      this.team = this.stats.team;
+      this.team = callsign; // Free-For-All: every pilot is their own independent faction
       this.callsign = callsign;
       this.isPlayer = isPlayer;
       this.wingIndex = wingIndex;
+      this.liveryIndex = liveryIndex;
+      this.livery = CONFIG.LIVERIES[liveryIndex % CONFIG.LIVERIES.length] || CONFIG.LIVERIES[0];
 
-      this.mesh = AircraftModelFactory.createAircraftMesh(typeId);
+      this.mesh = AircraftModelFactory.createAircraftMesh(typeId, liveryIndex);
       this.scene.add(this.mesh);
 
       this.flight = new FlightModel(this.stats);
-      this.ai = isPlayer ? null : new AIBotController(this, difficultyKey, wingIndex);
+      this.ai = isPlayer ? null : new AIBotController(this, difficultyKey, personalityObj, wingIndex);
+
+      // 3-Lives Run & Score State
+      this.maxLives = 3;
+      this.lives = 3;
+      this.eliminated = false;
+      this.respawnTimer = 0;
+      this.score = 0;
+      this.basePing = isPlayer ? 24 : (19 + Math.floor(Math.random() * 78));
+      this.ping = this.basePing;
 
       // Combat State
       this.alive = true;
@@ -3112,11 +3401,11 @@
       this.target = null;
       this.lockState = {
         target: null,
-        progress: 0,      // 0.0 to 1.0
+        progress: 0,
         isLocked: false
       };
 
-      // Scoreboard Telemetry
+      // Telemetry
       this.kills = 0;
       this.deaths = 0;
       this.shotsFired = 0;
@@ -3154,7 +3443,10 @@
       this.missileCooldown = Math.max(0, this.missileCooldown - dt);
       this.flareCooldown = Math.max(0, this.flareCooldown - dt);
 
-      // Slow missile replenishment so extended 8v8 battles stay dynamic while capping at 6
+      if (Math.random() < 0.05) {
+        this.ping = Math.max(12, this.basePing + Math.floor((Math.random() - 0.5) * 8));
+      }
+
       if (this.missiles < CONFIG.WEAPONS.MISSILE.maxCount) {
         this.rearmTimer += dt;
         if (this.rearmTimer >= CONFIG.WEAPONS.MISSILE.rearmTime) {
@@ -3163,10 +3455,8 @@
         }
       }
 
-      // Advance flight physics
       this.flight.update(dt, this.mesh, controls);
 
-      // Animate control surfaces & glowing afterburners
       const ud = this.mesh.userData;
       if (ud.leftElev && ud.rightElev) {
         ud.leftElev.rotation.x = controls.pitch * 0.35 - controls.roll * 0.25;
@@ -3180,7 +3470,6 @@
         ud.abGroup.visible = t > 0.22;
       }
 
-      // Distance-based LOD switch for 60 FPS performance
       if (cameraPos && ud.hiDetail && ud.loDetail) {
         const distSq = this.mesh.position.distanceToSquared(cameraPos);
         const isFar = distSq > CONFIG.WORLD.lodDistance * CONFIG.WORLD.lodDistance;
@@ -3188,10 +3477,8 @@
         ud.loDetail.visible = isFar && !this.hideMeshForCockpit;
       }
 
-      // Update Lock-On Progress against selected target
       this.updateLockOn(dt);
 
-      // Execute Weapons Commands
       if (controls.fireCannon) {
         const jitter = this.isPlayer ? 0.004 : (this.ai ? this.ai.diff.aimErrorRad * 0.4 : 0.02);
         weapons.fireCannon(this, jitter);
@@ -3203,7 +3490,6 @@
         weapons.deployFlares(this);
       }
 
-      // Low-Health Smoke & Fire Trails
       if (this.hp < 60) {
         this.damageSmokeTimer += dt;
         const interval = this.hp < 28 ? 0.04 : 0.08;
@@ -3237,7 +3523,6 @@
       const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(this.mesh.quaternion);
       const cosAngle = forward.dot(toTarget.normalize());
 
-      // Target stealth signature reduces effective lock range and lengthens lock time
       const sig = this.target.stats.radarSignature;
       const effectiveMaxRange = mCfg.lockRange * (0.75 + 0.25 * sig);
       const requiredTime = mCfg.baseLockTime / sig;
@@ -3278,31 +3563,47 @@
       this.canvas.height = h;
     }
 
-    render(ac, allAircraft, missiles, camera, isSpectating, cameraMode, input) {
+    render(ac, allAircraft, missiles, orbs, camera, isSpectating, cameraMode, input, armageddonState, highScore) {
       const ctx = this.ctx;
       const w = this.canvas.width;
       const h = this.canvas.height;
       ctx.clearRect(0, 0, w, h);
 
-      if (!ac || !ac.alive) return;
+      if (!ac) return;
 
       const cx = w * 0.5;
       const cy = h * 0.5;
       const hudColor = '#00ff9d';
+      const warnColor = '#ff3b47';
+      const cyanColor = '#38bdf8';
+      const isCompact = w < 700;
+
+      // 0. Top-Left Live FFA Leaderboard & Armageddon Clock (:00 IST)
+      this.renderTopLeftOverlay(ctx, allAircraft, armageddonState, highScore, isCompact);
+
+      if (!ac.alive) {
+        if (ac.lives > 0 && !ac.eliminated) {
+          ctx.save();
+          ctx.fillStyle = '#fbbf24';
+          ctx.font = 'bold 20px Consolas, monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText(`RESPAWNING IN ${Math.max(0.1, ac.respawnTimer).toFixed(1)}s (${ac.lives} ${ac.lives === 1 ? 'LIFE' : 'LIVES'} REMAINING)...`, cx, cy - 30);
+          ctx.restore();
+        }
+        return 0;
+      }
 
       // Draw Cockpit Canopy Struts & HUD Glass Combiner when in Cockpit View
       if (cameraMode === 'COCKPIT') {
         ctx.save();
         ctx.strokeStyle = 'rgba(20, 32, 48, 0.88)';
         ctx.lineWidth = 14;
-        // Left & Right canopy bow struts
         ctx.beginPath();
         ctx.moveTo(w * 0.14, h);
         ctx.quadraticCurveTo(w * 0.25, h * 0.35, w * 0.36, 0);
         ctx.moveTo(w * 0.86, h);
         ctx.quadraticCurveTo(w * 0.75, h * 0.35, w * 0.64, 0);
         ctx.stroke();
-        // Lower glare shield dash
         ctx.fillStyle = 'rgba(10, 16, 26, 0.82)';
         ctx.beginPath();
         ctx.moveTo(w * 0.22, h);
@@ -3311,14 +3612,11 @@
         ctx.lineTo(w * 0.78, h);
         ctx.closePath();
         ctx.fill();
-        // HUD combiner glass frame
         ctx.strokeStyle = 'rgba(0, 255, 157, 0.28)';
         ctx.lineWidth = 2;
         ctx.strokeRect(cx - 190, cy - 155, 380, 290);
         ctx.restore();
       }
-      const warnColor = '#ff3b47';
-      const cyanColor = '#38bdf8';
 
       // High-G vignette effect
       if (Math.abs(ac.flight.gForce) > 5.5) {
@@ -3343,7 +3641,6 @@
       const bx = bsScreen.inFront ? bsScreen.x : cx;
       const by = bsScreen.inFront ? bsScreen.y : cy;
 
-      // Boresight gun cross (where the aircraft nose is currently pointing)
       ctx.beginPath();
       ctx.moveTo(bx - 14, by); ctx.lineTo(bx - 5, by);
       ctx.moveTo(bx + 5, by);  ctx.lineTo(bx + 14, by);
@@ -3351,7 +3648,7 @@
       ctx.moveTo(bx, by + 5);  ctx.lineTo(bx, by + 14);
       ctx.stroke();
 
-      // Mouse Steering Cursor Reticle (shows where the plane is steering when mouse is pressed)
+      // Mouse Steering Cursor Reticle
       if (input && !isSpectating) {
         const mx = input.mouseScreenX;
         const my = input.mouseScreenY;
@@ -3429,11 +3726,8 @@
       ctx.strokeStyle = hudColor;
       ctx.fillStyle = 'rgba(4, 12, 24, 0.65)';
 
-      // Responsive horizontal offset so speed & altitude boxes fit phone screens cleanly
-      const isCompact = w < 700;
       const wingSpread = isCompact ? Math.max(68, w * 0.20) : 225;
 
-      // Left: Airspeed (Knots & km/h) + G-Force + Mach
       const speedKts = Math.round(ac.flight.speed * 3.2);
       const speedKmh = Math.round(ac.flight.speed * 5.9);
       const mach = (ac.flight.speed / 195).toFixed(2);
@@ -3448,10 +3742,9 @@
       ctx.fillText(`G   ${ac.flight.gForce.toFixed(1)}G`, leftX - 82, cy + 36);
       if (!isCompact) {
         ctx.fillText(`M   ${mach}`, leftX - 82, cy + 52);
-        ctx.fillText(`AOA ${ac.flight.aoa.toFixed(1)}°`, leftX - 82, cy + 68);
+        ctx.fillText(`SCORE ${ac.score}`, leftX - 82, cy + 68);
       }
 
-      // Right: Altitude (Meters & Feet)
       const altM = Math.max(0, Math.round(ac.mesh.position.y));
       const rightX = Math.min(w - 94, cx + wingSpread);
       ctx.fillStyle = 'rgba(4, 12, 24, 0.65)';
@@ -3477,58 +3770,61 @@
       ctx.fillText(`HDG ${hdgStr}° [${card}]`, cx, 66);
       ctx.textAlign = 'left';
 
-      // 4. Bottom-Right Weapon, Throttle & Health Panel (shifted above touch cluster when active)
+      // 4. Bottom-Right Weapon, Lives, Score, Throttle & Health Panel
       const touchOffset = (input && input.touchUIVisible) ? 132 : 0;
-      const panelW = isCompact ? 185 : 225;
-      const panelH = 122;
+      const panelW = isCompact ? 195 : 235;
+      const panelH = 138;
       const px = w - panelW - 12;
       const py = h - panelH - 16 - touchOffset;
-      ctx.fillStyle = 'rgba(6, 14, 28, 0.8)';
+      ctx.fillStyle = 'rgba(6, 14, 28, 0.84)';
       ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
       ctx.fillRect(px, py, panelW, panelH);
       ctx.strokeRect(px, py, panelW, panelH);
 
       ctx.font = 'bold 12px Consolas, monospace';
-      ctx.fillStyle = ac.team === 'BLUE' ? cyanColor : '#ff6b81';
-      ctx.fillText(`${ac.stats.name} [${ac.callsign}]`, px + 10, py + 18);
+      ctx.fillStyle = '#00ff9d';
+      const hearts = '♥'.repeat(Math.max(0, ac.lives)) + '♡'.repeat(Math.max(0, 3 - ac.lives));
+      ctx.fillText(`${ac.callsign} [${hearts}]`, px + 10, py + 18);
 
-      // Health Bar
+      // Score & Hull
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = 'bold 11.5px Consolas, monospace';
+      ctx.fillText(`SCORE: ${ac.score} PTS`, px + 10, py + 34);
+
       ctx.fillStyle = '#cbd5e1';
       ctx.font = '11px Consolas, monospace';
-      ctx.fillText(`HULL ${Math.max(0, Math.round(ac.hp))}%`, px + 10, py + 38);
+      ctx.fillText(`HULL ${Math.max(0, Math.round(ac.hp))}%`, px + 10, py + 52);
       ctx.fillStyle = 'rgba(255,255,255,0.12)';
-      ctx.fillRect(px + 82, py + 28, 130, 10);
+      ctx.fillRect(px + 82, py + 42, panelW - 94, 9);
       ctx.fillStyle = ac.hp > 50 ? hudColor : (ac.hp > 25 ? '#fbbf24' : warnColor);
-      ctx.fillRect(px + 82, py + 28, 130 * (Math.max(0, ac.hp) / ac.stats.maxHp), 10);
+      ctx.fillRect(px + 82, py + 42, (panelW - 94) * (Math.max(0, ac.hp) / ac.stats.maxHp), 9);
 
       // Throttle / Afterburner Bar
       const thrPct = Math.round(ac.flight.throttle * 100);
       const isAB = ac.flight.throttle > 0.78;
       ctx.fillStyle = isAB ? '#fbbf24' : '#cbd5e1';
-      ctx.fillText(isAB ? `THR  AB ${thrPct}%` : `THR  ${thrPct}%`, px + 10, py + 56);
+      ctx.fillText(isAB ? `THR  AB ${thrPct}%` : `THR  ${thrPct}%`, px + 10, py + 68);
       ctx.fillStyle = 'rgba(255,255,255,0.12)';
-      ctx.fillRect(px + 82, py + 46, 130, 10);
+      ctx.fillRect(px + 82, py + 58, panelW - 94, 9);
       ctx.fillStyle = isAB ? '#ff6b2b' : cyanColor;
-      ctx.fillRect(px + 82, py + 46, 130 * ac.flight.throttle, 10);
+      ctx.fillRect(px + 82, py + 58, (panelW - 94) * ac.flight.throttle, 9);
 
       // Weapons Counters
       ctx.fillStyle = hudColor;
-      ctx.font = 'bold 12px Consolas, monospace';
-      ctx.fillText(`GUN  ${String(ac.ammo).padStart(3, '0')} / ${CONFIG.WEAPONS.CANNON.maxAmmo} [F]`, px + 10, py + 78);
-      ctx.fillText(`MSL  ${ac.missiles} / ${CONFIG.WEAPONS.MISSILE.maxCount} ${ac.missileCooldown > 0 ? '(RELOAD)' : '[SPACE]'}`, px + 10, py + 96);
-      ctx.fillText(`FLR  ${ac.flares} / ${CONFIG.WEAPONS.FLARE.maxCount} [X]`, px + 10, py + 114);
+      ctx.font = 'bold 11.5px Consolas, monospace';
+      ctx.fillText(`GUN  ${String(ac.ammo).padStart(3, '0')} / ${CONFIG.WEAPONS.CANNON.maxAmmo} [F]`, px + 10, py + 88);
+      ctx.fillText(`MSL  ${ac.missiles} / ${CONFIG.WEAPONS.MISSILE.maxCount} ${ac.missileCooldown > 0 ? '(RELOAD)' : '[SPACE]'}`, px + 10, py + 106);
+      ctx.fillText(`FLR  ${ac.flares} / ${CONFIG.WEAPONS.FLARE.maxCount} [X]`, px + 10, py + 124);
 
-      // 5. Target Box, Lead Indicator Pipper, Lock-On Progress & Off-Screen Arrows
+      // 5. Target Box, Lead Indicator Pipper, Lock-On Progress & Off-Screen Arrows (All FFA opponents)
       for (const other of allAircraft) {
         if (!other.alive || other === ac) continue;
-        const isEnemy = other.team !== ac.team;
         const isCurrentTarget = other === ac.target;
         const screen = this.projectToScreen(other.mesh.position, camera, w, h);
         const dist = Math.round(ac.mesh.position.distanceTo(other.mesh.position));
 
         if (screen.inFront && screen.x >= 20 && screen.x <= w - 20 && screen.y >= 20 && screen.y <= h - 20) {
           if (isCurrentTarget) {
-            // Target Box + Callsign + Distance + Health Bar
             const boxS = 22;
             ctx.strokeStyle = ac.lockState.isLocked ? warnColor : hudColor;
             ctx.lineWidth = 2.0;
@@ -3536,16 +3832,14 @@
 
             ctx.fillStyle = ac.lockState.isLocked ? warnColor : hudColor;
             ctx.font = 'bold 11px Consolas, monospace';
-            ctx.fillText(`${other.callsign} (${other.stats.shortName})`, screen.x - boxS, screen.y - boxS - 14);
-            ctx.fillText(`${dist}m`, screen.x - boxS, screen.y - boxS - 3);
+            ctx.fillText(`${other.callsign} (${other.stats.shortName}) [${other.score}]`, screen.x - boxS, screen.y - boxS - 14);
+            ctx.fillText(`${dist}m • ${other.lives}♥`, screen.x - boxS, screen.y - boxS - 3);
 
-            // Target mini HP bar
             ctx.fillStyle = 'rgba(0,0,0,0.6)';
             ctx.fillRect(screen.x - boxS, screen.y + boxS + 4, boxS * 2, 4);
             ctx.fillStyle = warnColor;
             ctx.fillRect(screen.x - boxS, screen.y + boxS + 4, (boxS * 2) * (other.hp / other.stats.maxHp), 4);
 
-            // Lock-on diamond & progress ring
             if (ac.lockState.progress > 0.02) {
               const lockR = 44 - ac.lockState.progress * 22;
               ctx.save();
@@ -3565,7 +3859,6 @@
               ctx.textAlign = 'left';
             }
 
-            // Cannon Lead Indicator Pipper (shows when within 1700m)
             if (dist < 1700) {
               const lead = WeaponsManager.computeLeadPosition(
                 ac.mesh.position,
@@ -3577,7 +3870,6 @@
               if (leadScreen.inFront) {
                 ctx.strokeStyle = ac.lockState.isLocked ? warnColor : '#fbbf24';
                 ctx.lineWidth = 1.5;
-                // Line from target to lead pipper
                 ctx.setLineDash([3, 3]);
                 ctx.beginPath();
                 ctx.moveTo(screen.x, screen.y);
@@ -3585,7 +3877,6 @@
                 ctx.stroke();
                 ctx.setLineDash([]);
 
-                // Pipper circle + center dot
                 ctx.beginPath();
                 ctx.arc(leadScreen.x, leadScreen.y, 9, 0, Math.PI * 2);
                 ctx.stroke();
@@ -3594,26 +3885,17 @@
                 ctx.fill();
               }
             }
-          } else if (isEnemy) {
-            // Secondary hostile brackets
+          } else {
             ctx.strokeStyle = 'rgba(255, 71, 87, 0.75)';
             ctx.lineWidth = 1.2;
             ctx.strokeRect(screen.x - 10, screen.y - 10, 20, 20);
-          } else {
-            // Friendly chevron marker
-            ctx.strokeStyle = 'rgba(56, 189, 248, 0.75)';
-            ctx.lineWidth = 1.4;
-            ctx.beginPath();
-            ctx.arc(screen.x, screen.y, 7, 0, Math.PI * 2);
-            ctx.stroke();
-            if (dist < 2200) {
-              ctx.fillStyle = 'rgba(56, 189, 248, 0.85)';
+            if (dist < 1800) {
+              ctx.fillStyle = 'rgba(255, 130, 140, 0.85)';
               ctx.font = '10px Consolas, monospace';
-              ctx.fillText(other.callsign, screen.x + 10, screen.y + 3);
+              ctx.fillText(`${other.callsign}`, screen.x + 12, screen.y + 3);
             }
           }
-        } else if (isEnemy) {
-          // Off-screen Enemy Directional Arrow around HUD perimeter
+        } else {
           const localPos = other.mesh.position.clone().applyMatrix4(camera.matrixWorldInverse);
           const angle = Math.atan2(localPos.y, localPos.x);
           const arrowRadius = Math.min(w, h) * 0.36;
@@ -3636,8 +3918,8 @@
         }
       }
 
-      // 6. Central Warnings (Missile Lock / Launch Alert, Stall, Altitude, Boundary)
-      let threatLevel = 0; // 0 = clear, 1 = enemy locking us, 2 = missile incoming
+      // 6. Central Warnings & Armageddon Banner
+      let threatLevel = 0;
       for (const m of missiles) {
         if (m.target === ac && !m.decoyFlare) {
           threatLevel = 2;
@@ -3646,7 +3928,7 @@
       }
       if (threatLevel === 0) {
         for (const other of allAircraft) {
-          if (other.alive && other.team !== ac.team && other.target === ac && other.lockState.progress > 0.15) {
+          if (other.alive && other !== ac && other.target === ac && other.lockState.progress > 0.15) {
             threatLevel = 1;
             break;
           }
@@ -3655,41 +3937,46 @@
 
       ctx.textAlign = 'center';
       const blink = Math.floor(performance.now() / 180) % 2 === 0;
+      if (armageddonState && armageddonState.active) {
+        ctx.fillStyle = blink ? '#ff2e43' : '#fbbf24';
+        ctx.font = 'bold 14px Consolas, monospace';
+        ctx.fillText(`⚡ ARMAGEDDON IN PROGRESS (${armageddonState.survivors} SURVIVORS LEFT) — NO RE-ENTRIES ⚡`, cx, 88);
+      }
+
       if (threatLevel === 2) {
         ctx.fillStyle = blink ? '#ff2e43' : '#fbbf24';
-        ctx.font = 'bold 18px Consolas, monospace';
-        ctx.fillText('⚠ MISSILE LAUNCH DETECTED - EVADE & DEPLOY FLARES [X] ⚠', cx, 108);
+        ctx.font = 'bold 17px Consolas, monospace';
+        ctx.fillText('⚠ MISSILE LAUNCH DETECTED - EVADE & DEPLOY FLARES [X] ⚠', cx, 112);
       } else if (threatLevel === 1) {
         ctx.fillStyle = '#fbbf24';
         ctx.font = 'bold 15px Consolas, monospace';
-        ctx.fillText('⚠ RADAR LOCK WARNING - HOSTILE TRACKING ⚠', cx, 108);
+        ctx.fillText('⚠ RADAR LOCK WARNING - HOSTILE TRACKING ⚠', cx, 112);
       }
 
       if (ac.flight.isStalling && blink) {
         ctx.fillStyle = warnColor;
-        ctx.font = 'bold 17px Consolas, monospace';
-        ctx.fillText('⚠ AERODYNAMIC STALL - INCREASE THROTTLE & LOWER NOSE ⚠', cx, cy + 145);
+        ctx.font = 'bold 16px Consolas, monospace';
+        ctx.fillText('⚠ AERODYNAMIC STALL - INCREASE SPEED [W] & LOWER NOSE ⚠', cx, cy + 145);
       } else if (altM < 130 && blink) {
         ctx.fillStyle = warnColor;
-        ctx.font = 'bold 17px Consolas, monospace';
+        ctx.font = 'bold 16px Consolas, monospace';
         ctx.fillText('⚠ TERRAIN PULL UP ⚠', cx, cy + 145);
       } else if (ac.flight.outOfBoundsWarning) {
         ctx.fillStyle = '#fbbf24';
-        ctx.font = 'bold 16px Consolas, monospace';
+        ctx.font = 'bold 15px Consolas, monospace';
         ctx.fillText(
           ac.flight.autopilotOverride
-            ? 'AUTOPILOT ENGAGED: RETURNING TO COMBAT AIRSPACE'
-            : 'WARNING: LEAVING COMBAT ZONE - TURN BACK',
+            ? 'AUTOPILOT ENGAGED: RETURNING TO ARENA'
+            : 'WARNING: LEAVING ARENA BOUNDARY - TURN BACK',
           cx,
           cy + 145
         );
       }
       ctx.textAlign = 'left';
 
-      // 7. Circular Radar / Minimap (Bottom-Left, shifted above left thumb cluster when touch UI active)
-      this.renderRadar(ctx, ac, allAircraft, missiles, w, h, headingDeg, touchOffset, isCompact);
+      // 7. Circular Radar / Minimap (Plots opponents in Red, current target in Gold, and Neon Orbs in Cyan!)
+      this.renderRadar(ctx, ac, allAircraft, missiles, orbs, w, h, headingDeg, touchOffset, isCompact);
 
-      // Highlight mobile Missile button when target is locked
       const mslBtn = document.getElementById('tbtn-msl');
       if (mslBtn) {
         mslBtn.classList.toggle('locked-ready', Boolean(ac.lockState.isLocked));
@@ -3699,14 +3986,55 @@
       return threatLevel;
     }
 
-    renderRadar(ctx, ac, allAircraft, missiles, w, h, headingDeg, touchOffset = 0, isCompact = false) {
+    renderTopLeftOverlay(ctx, allAircraft, armageddonState, highScore, isCompact) {
+      ctx.save();
+      const boxW = isCompact ? 175 : 220;
+      const x = 12;
+      const y = 48;
+
+      ctx.fillStyle = 'rgba(5, 12, 24, 0.80)';
+      ctx.strokeStyle = armageddonState && armageddonState.active ? '#ff3b47' : 'rgba(56, 189, 248, 0.4)';
+      ctx.lineWidth = 1.4;
+      ctx.fillRect(x, y, boxW, 146);
+      ctx.strokeRect(x, y, boxW, 146);
+
+      ctx.font = 'bold 11px Consolas, monospace';
+      if (armageddonState && armageddonState.active) {
+        ctx.fillStyle = '#ff3b47';
+        ctx.fillText(`⚡ ARMAGEDDON ACTIVE`, x + 8, y + 16);
+      } else {
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillText(`NEXT ARMAGEDDON: ${armageddonState ? armageddonState.countdownStr : '--:--'}`, x + 8, y + 16);
+      }
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '10px Consolas, monospace';
+      ctx.fillText(`IST ${armageddonState ? armageddonState.istClockStr : ''} • BEST ${highScore}`, x + 8, y + 30);
+
+      // Sort top 5 active pilots by score
+      const activePilots = allAircraft.filter(a => !a.eliminated).sort((a, b) => b.score - a.score).slice(0, 5);
+      let rowY = y + 48;
+      for (let i = 0; i < activePilots.length; i++) {
+        const p = activePilots[i];
+        ctx.fillStyle = p.isPlayer ? '#00ff9d' : (i === 0 ? '#fbbf24' : '#e2e8f0');
+        ctx.font = p.isPlayer ? 'bold 11px Consolas, monospace' : '11px Consolas, monospace';
+        const nameClip = p.callsign.length > 11 ? p.callsign.slice(0, 11) : p.callsign;
+        ctx.fillText(`${i + 1}. ${nameClip}`, x + 8, rowY);
+        ctx.textAlign = 'right';
+        ctx.fillText(`${p.score} (${p.lives}♥)`, x + boxW - 8, rowY);
+        ctx.textAlign = 'left';
+        rowY += 19;
+      }
+      ctx.restore();
+    }
+
+    renderRadar(ctx, ac, allAircraft, missiles, orbs, w, h, headingDeg, touchOffset = 0, isCompact = false) {
       const rRadius = isCompact ? 56 : 78;
       const rx = 14 + rRadius;
       const ry = h - 16 - rRadius - touchOffset;
-      const radarRange = 4500; // meters full radius
+      const radarRange = 4500;
 
       ctx.save();
-      // Background disk
       ctx.fillStyle = 'rgba(4, 14, 26, 0.84)';
       ctx.strokeStyle = 'rgba(0, 255, 157, 0.55)';
       ctx.lineWidth = 1.8;
@@ -3715,7 +4043,6 @@
       ctx.fill();
       ctx.stroke();
 
-      // Range rings (1.5km, 3.0km, 4.5km)
       ctx.strokeStyle = 'rgba(0, 255, 157, 0.2)';
       ctx.lineWidth = 1.0;
       for (const frac of [0.33, 0.66]) {
@@ -3724,7 +4051,6 @@
         ctx.stroke();
       }
 
-      // Forward FOV cone lines
       ctx.beginPath();
       ctx.moveTo(rx, ry);
       ctx.lineTo(rx - Math.sin(0.42) * rRadius, ry - Math.cos(0.42) * rRadius);
@@ -3732,7 +4058,6 @@
       ctx.lineTo(rx + Math.sin(0.42) * rRadius, ry - Math.cos(0.42) * rRadius);
       ctx.stroke();
 
-      // Center player icon
       ctx.fillStyle = '#00ff9d';
       ctx.beginPath();
       ctx.moveTo(rx, ry - 5);
@@ -3745,7 +4070,21 @@
       const cosR = Math.cos(rotRad);
       const sinR = Math.sin(rotRad);
 
-      // Plot aircraft contacts
+      // Plot nearby Neon Orbs on radar
+      if (orbs) {
+        for (const o of orbs) {
+          const dx = (o.group.position.x - ac.mesh.position.x) / radarRange;
+          const dz = (o.group.position.z - ac.mesh.position.z) / radarRange;
+          const rxRel = dx * cosR - dz * sinR;
+          const ryRel = dx * sinR + dz * cosR;
+          if (rxRel * rxRel + ryRel * ryRel < 0.92 * 0.92) {
+            ctx.fillStyle = o.scoreVal >= 100 ? '#fbbf24' : '#38bdf8';
+            ctx.fillRect(rx + rxRel * rRadius - 1.2, ry + ryRel * rRadius - 1.2, 2.4, 2.4);
+          }
+        }
+      }
+
+      // Plot FFA aircraft contacts
       for (const other of allAircraft) {
         if (!other.alive || other === ac) continue;
         const dx = (other.mesh.position.x - ac.mesh.position.x) / radarRange;
@@ -3757,9 +4096,7 @@
         const px = rx + Math.cos(ang) * distNorm * rRadius;
         const py = ry + Math.sin(ang) * distNorm * rRadius;
 
-        ctx.fillStyle = other === ac.target
-          ? '#fbbf24'
-          : (other.team === 'BLUE' ? '#38bdf8' : '#ff3b47');
+        ctx.fillStyle = other === ac.target ? '#fbbf24' : '#ff3b47';
         ctx.beginPath();
         ctx.arc(px, py, other === ac.target ? 4.2 : 3.0, 0, Math.PI * 2);
         ctx.fill();
@@ -3780,7 +4117,7 @@
 
       ctx.fillStyle = 'rgba(0, 255, 157, 0.75)';
       ctx.font = '10px Consolas, monospace';
-      ctx.fillText('RADAR 4.5KM', rx - 32, ry + rRadius - 6);
+      ctx.fillText('FFA RADAR', rx - 28, ry + rRadius - 6);
       ctx.restore();
     }
 
@@ -3795,10 +4132,8 @@
   }
 
   /* ============================================================================
-   * 12. MAIN GAME CONTROLLER (Game)
+   * 12. MAIN GAME CONTROLLER (FFA Arena, 3-Lives Loop & :00 IST Armageddon)
    * ============================================================================
-   * Manages match lifecycle, Three.js renderer, camera modes (Chase & Cockpit),
-   * AI spawning, damage resolution, kill feed, scoreboard, and UI overlays.
    */
   class Game {
     constructor() {
@@ -3822,25 +4157,37 @@
       this.hud = new HUDRenderer(document.getElementById('hud-canvas'));
       this.hud.resize(window.innerWidth, window.innerHeight);
 
-      // Selected Match Options
+      // Player Preferences
       this.selectedAircraft = 'F22';
-      this.teamSize = 5;
-      this.difficulty = 'NORMAL';
+      this.selectedLivery = 0;
+      this.arenaPilotCount = 12; // 1 human + 11 unique other pilots in the FFA arena
+      this.namePoolIndex = 0;
 
-      // Runtime State
-      this.state = 'MENU'; // MENU, PLAYING, PAUSED, SPECTATING, ENDED
+      // Persistent High Score
+      this.highScore = 0;
+      try {
+        this.highScore = parseInt(localStorage.getItem('skydominion_highscore') || '0', 10) || 0;
+      } catch (e) {}
+
+      // Runtime & Armageddon State (:00 IST World Clock)
+      this.state = 'MENU'; // MENU, PLAYING, PAUSED, SPECTATING, CHAMPION_SHOWCASE, ENDED
       this.aircraftList = [];
       this.player = null;
       this.spectateTarget = null;
-      this.cameraMode = 'CHASE'; // CHASE or COCKPIT
+      this.championPilot = null;
+      this.championShowcaseTimer = 0;
+      this.cameraMode = 'CHASE';
       this.smoothCamPos = new THREE.Vector3();
       this.smoothCamLook = new THREE.Vector3();
       this.sortieStartTime = 0;
       this.elapsedSortieSec = 0;
-      this.tabHoldActive = false;
+
+      this.isArmageddon = false;
+      this.lastTriggeredIstHourKey = null;
+      this.armageddonHudInfo = { active: false, countdownStr: '--:--', istClockStr: '--:--:--', survivors: 0 };
 
       // Showcase fighter for background flyby on Start Screen
-      this.menuFighter = AircraftModelFactory.createAircraftMesh('F22');
+      this.menuFighter = AircraftModelFactory.createAircraftMesh('F22', 0);
       this.menuFighter.position.set(0, 750, 0);
       this.scene.add(this.menuFighter);
 
@@ -3848,7 +4195,6 @@
       this.handleResize();
       window.addEventListener('resize', () => this.handleResize());
 
-      // Pause automatically if browser tab loses visibility
       document.addEventListener('visibilitychange', () => {
         if (document.hidden && this.state === 'PLAYING') {
           this.setPaused(true);
@@ -3860,41 +4206,31 @@
     }
 
     bindUIEvents() {
-      // Aircraft cards
       const cardF22 = document.getElementById('card-f22');
       const cardSu57 = document.getElementById('card-su57');
       cardF22.addEventListener('click', () => {
         this.selectedAircraft = 'F22';
         cardF22.classList.add('selected-blue');
         cardSu57.classList.remove('selected-red');
-        this.updateMenuPreviewMesh('F22');
+        this.updateMenuPreviewMesh();
       });
       cardSu57.addEventListener('click', () => {
         this.selectedAircraft = 'SU57';
         cardSu57.classList.add('selected-red');
         cardF22.classList.remove('selected-blue');
-        this.updateMenuPreviewMesh('SU57');
+        this.updateMenuPreviewMesh();
       });
 
-      // Team size buttons
-      document.querySelectorAll('#size-group .opt-btn').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          document.querySelectorAll('#size-group .opt-btn').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          this.teamSize = parseInt(btn.dataset.size, 10);
+      // Livery swatches
+      document.querySelectorAll('#livery-group .livery-swatch').forEach((sw) => {
+        sw.addEventListener('click', () => {
+          document.querySelectorAll('#livery-group .livery-swatch').forEach(el => el.classList.remove('active'));
+          sw.classList.add('active');
+          this.selectedLivery = parseInt(sw.dataset.livery, 10) || 0;
+          this.updateMenuPreviewMesh();
         });
       });
 
-      // Difficulty buttons
-      document.querySelectorAll('#diff-group .opt-btn').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          document.querySelectorAll('#diff-group .opt-btn').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          this.difficulty = btn.dataset.diff;
-        });
-      });
-
-      // Mouse steering mode buttons on Start Screen
       const btnMouseHold = document.getElementById('opt-mouse-hold');
       const btnMouseFree = document.getElementById('opt-mouse-free');
       const syncMouseMode = (freeMode) => {
@@ -3907,7 +4243,6 @@
       btnMouseHold.addEventListener('click', () => syncMouseMode(false));
       btnMouseFree.addEventListener('click', () => syncMouseMode(true));
 
-      // Top HUD quick-toggle buttons
       document.getElementById('btn-cam').addEventListener('click', () => this.toggleCamera());
       document.getElementById('btn-mouse-aim').addEventListener('click', () => syncMouseMode(!this.input.freeMouseSteer));
       const btnTouchUI = document.getElementById('btn-touch-ui');
@@ -3921,30 +4256,59 @@
       document.getElementById('btn-mute').addEventListener('click', () => this.toggleMute());
       document.getElementById('btn-pause').addEventListener('click', () => this.setPaused(this.state !== 'PAUSED'));
 
-      // Launch / Pause / Results Buttons
       document.getElementById('btn-launch').addEventListener('click', () => {
         this.audio.init();
         this.startMatch();
       });
       document.getElementById('btn-resume').addEventListener('click', () => this.setPaused(false));
-      document.getElementById('btn-restart').addEventListener('click', () => this.startMatch());
+      document.getElementById('btn-restart').addEventListener('click', () => this.redeployPlayerRun());
       document.getElementById('btn-return-menu').addEventListener('click', () => this.returnToMenu());
-      document.getElementById('btn-play-again').addEventListener('click', () => this.startMatch());
+      document.getElementById('btn-play-again').addEventListener('click', () => this.redeployPlayerRun());
       document.getElementById('btn-results-menu').addEventListener('click', () => this.returnToMenu());
 
-      // Spectate / Respawn Options when player dies mid-battle
-      document.getElementById('btn-respawn-now').addEventListener('click', () => this.respawnPlayerInWingman());
+      document.getElementById('btn-respawn-now').addEventListener('click', () => this.redeployPlayerRun());
       document.getElementById('btn-spectate-now').addEventListener('click', () => this.enterSpectateMode());
       document.getElementById('btn-spec-next').addEventListener('click', () => this.cycleSpectateTarget());
-      document.getElementById('btn-spec-respawn').addEventListener('click', () => this.respawnPlayerInWingman());
-      document.getElementById('btn-spec-end').addEventListener('click', () => this.endMatch('SORTIE CONCLUDED', 'PLAYER ENDED SPECTATOR VIEW'));
+      document.getElementById('btn-spec-respawn').addEventListener('click', () => this.redeployPlayerRun());
+      document.getElementById('btn-spec-end').addEventListener('click', () => this.returnToMenu());
+
+      document.getElementById('btn-join-next-server').addEventListener('click', () => {
+        document.getElementById('champion-overlay').classList.add('hidden');
+        this.startMatch();
+      });
     }
 
-    updateMenuPreviewMesh(typeId) {
+    updateMenuPreviewMesh() {
       if (this.menuFighter) this.scene.remove(this.menuFighter);
-      this.menuFighter = AircraftModelFactory.createAircraftMesh(typeId);
+      this.menuFighter = AircraftModelFactory.createAircraftMesh(this.selectedAircraft, this.selectedLivery);
       this.menuFighter.position.set(0, 750, 0);
       this.scene.add(this.menuFighter);
+    }
+
+    getNextUniquePilotName() {
+      const names = CONFIG.PILOT_NAMES;
+      const used = new Set(this.aircraftList.map(a => a.callsign));
+      for (let tries = 0; tries < names.length; tries++) {
+        const candidate = names[(this.namePoolIndex++) % names.length];
+        if (!used.has(candidate)) return candidate;
+      }
+      return `Pilot_${Math.floor(100 + Math.random() * 899)}`;
+    }
+
+    createUniqueBotPilot(slotIndex) {
+      const name = this.getNextUniquePilotName();
+      const typeId = (slotIndex % 2 === 0) ? 'SU57' : 'F22';
+      const liveryIdx = (slotIndex + Math.floor(Math.random() * 6)) % CONFIG.LIVERIES.length;
+      const skillKeys = ['EASY', 'NORMAL', 'NORMAL', 'ACE'];
+      const diffKey = skillKeys[slotIndex % skillKeys.length];
+      const personality = CONFIG.PERSONALITIES[slotIndex % CONFIG.PERSONALITIES.length];
+
+      const ac = new Aircraft(this.scene, typeId, name, false, diffKey, slotIndex, liveryIdx, personality);
+      const angle = (slotIndex / this.arenaPilotCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.35;
+      const radius = 1650 + Math.random() * 1400;
+      const alt = personality.prefAltMin + Math.random() * (personality.prefAltMax - personality.prefAltMin);
+      ac.spawnAt(Math.cos(angle) * radius, alt, Math.sin(angle) * radius, angle + Math.PI * 0.5);
+      return ac;
     }
 
     startMatch() {
@@ -3955,52 +4319,86 @@
       document.getElementById('pause-screen').classList.add('hidden');
       document.getElementById('results-screen').classList.add('hidden');
       document.getElementById('spectate-bar').classList.add('hidden');
+      document.getElementById('champion-overlay').classList.add('hidden');
       document.getElementById('top-controls').classList.remove('hidden');
       document.getElementById('touch-controls').classList.toggle('hidden', !this.input.touchUIVisible);
       document.getElementById('feed-container').innerHTML = '';
 
       this.state = 'PLAYING';
+      this.isArmageddon = false;
+      this.championPilot = null;
       this.sortieStartTime = performance.now();
       this.elapsedSortieSec = 0;
       this.input.clearJustPressed();
 
-      const playerTeam = CONFIG.AIRCRAFT[this.selectedAircraft].team;
+      const rawCallsign = (document.getElementById('input-callsign').value || '').trim();
+      const playerCallsign = rawCallsign.length > 0 ? rawCallsign : 'NightHawk_IN';
 
-      // Spawn Team Blue (F-22 Raptors) on South side heading North
-      for (let i = 0; i < this.teamSize; i++) {
-        const isHuman = (playerTeam === 'BLUE' && i === 0);
-        const callsign = isHuman ? 'Blue_1 [YOU]' : `Bot_Blue_${i + 1}`;
-        const ac = new Aircraft(this.scene, 'F22', callsign, isHuman, this.difficulty, i);
-        const offsetX = (i % 2 === 0 ? 1 : -1) * Math.ceil(i / 2) * 95;
-        const offsetZ = 1850 + Math.ceil(i / 2) * 75;
-        ac.spawnAt(offsetX, 950 + (i % 3) * 35, offsetZ, 0);
-        this.aircraftList.push(ac);
-        if (isHuman) this.player = ac;
+      // Spawn Human Player with 3 Lives
+      this.player = new Aircraft(
+        this.scene,
+        this.selectedAircraft,
+        playerCallsign,
+        true,
+        'NORMAL',
+        0,
+        this.selectedLivery,
+        null
+      );
+      this.player.spawnAt(0, 1050, 2100, 0);
+      this.aircraftList.push(this.player);
+
+      // Spawn 11 Unique Other Pilots (each with unique livery, jet, skill tier, and personality)
+      for (let i = 1; i < this.arenaPilotCount; i++) {
+        const bot = this.createUniqueBotPilot(i);
+        // Give existing arena pilots a realistic starting score spread so the server feels live
+        bot.score = Math.floor(Math.random() * 5) * 50;
+        this.aircraftList.push(bot);
       }
 
-      // Spawn Team Red (Su-57 Felons) on North side heading South
-      for (let i = 0; i < this.teamSize; i++) {
-        const isHuman = (playerTeam === 'RED' && i === 0);
-        const callsign = isHuman ? 'Red_1 [YOU]' : `Bot_Red_${i + 1}`;
-        const ac = new Aircraft(this.scene, 'SU57', callsign, isHuman, this.difficulty, i);
-        const offsetX = (i % 2 === 0 ? 1 : -1) * Math.ceil(i / 2) * 95;
-        const offsetZ = -1850 - Math.ceil(i / 2) * 75;
-        ac.spawnAt(offsetX, 950 + (i % 3) * 35, offsetZ, Math.PI);
-        this.aircraftList.push(ac);
-        if (isHuman) this.player = ac;
-      }
-
-      // Assign initial targets
       this.cyclePlayerTarget();
       for (const ac of this.aircraftList) {
         if (!ac.isPlayer && ac.ai) {
-          ac.ai.evaluateTacticalState(this.aircraftList, this.player, null);
+          ac.ai.evaluateFFATargetsAndOrbs(this.aircraftList, this.world);
         }
       }
 
-      // Snap initial chase camera behind player
       this.updateCamera(1.0, this.player, true);
-      this.addFeedItem(`Sortie commenced: ${this.teamSize}v${this.teamSize} (${CONFIG.AI_DIFFICULTY[this.difficulty].label} AI)`, 'radio');
+      this.addFeedItem(`Connected to MUMBAI-FFA-04 • 3 Lives Per Run`, 'radio');
+    }
+
+    redeployPlayerRun() {
+      if (this.isArmageddon) {
+        this.addFeedItem(`Armageddon active — re-deployment locked until round ends!`, 'warn');
+        this.enterSpectateMode();
+        return;
+      }
+      if (!this.player) {
+        this.startMatch();
+        return;
+      }
+      document.getElementById('pause-screen').classList.add('hidden');
+      document.getElementById('results-screen').classList.add('hidden');
+      document.getElementById('spectate-bar').classList.add('hidden');
+      document.getElementById('touch-controls').classList.toggle('hidden', !this.input.touchUIVisible);
+
+      // Fresh 3-life run in the same live arena!
+      this.player.lives = 3;
+      this.player.eliminated = false;
+      this.player.score = 0;
+      this.player.kills = 0;
+      this.player.deaths = 0;
+      this.player.shotsFired = 0;
+      this.player.cannonHits = 0;
+      this.player.missilesFired = 0;
+      this.player.missilesHit = 0;
+      this.elapsedSortieSec = 0;
+
+      const angle = Math.random() * Math.PI * 2;
+      this.player.spawnAt(Math.cos(angle) * 2000, 1050, Math.sin(angle) * 2000, angle + Math.PI);
+      this.state = 'PLAYING';
+      this.cyclePlayerTarget();
+      this.addFeedItem(`${this.player.callsign} re-deployed (3 Lives)`, 'radio');
     }
 
     clearMatchEntities() {
@@ -4022,6 +4420,7 @@
       document.getElementById('pause-screen').classList.add('hidden');
       document.getElementById('results-screen').classList.add('hidden');
       document.getElementById('spectate-bar').classList.add('hidden');
+      document.getElementById('champion-overlay').classList.add('hidden');
       document.getElementById('start-screen').classList.remove('hidden');
     }
 
@@ -4057,7 +4456,7 @@
       const pauseEl = document.getElementById('pause-screen');
       if (pause) {
         this.populateScoreboard('scoreboard-body');
-        document.getElementById('pause-buttons-row').classList.remove('hidden');
+        document.getElementById('btn-restart').classList.toggle('hidden', this.isArmageddon);
         pauseEl.classList.remove('hidden');
         this.audio.updateEngine(0, 0, false);
       } else {
@@ -4067,12 +4466,11 @@
 
     cyclePlayerTarget() {
       if (!this.player) return;
-      const enemies = this.aircraftList.filter(a => a.alive && a.team !== this.player.team);
+      const enemies = this.aircraftList.filter(a => a.alive && a !== this.player);
       if (enemies.length === 0) {
         this.player.target = null;
         return;
       }
-      // Sort by distance so cycling picks nearest hostiles cleanly
       enemies.sort((a, b) =>
         a.mesh.position.distanceToSquared(this.player.mesh.position) -
         b.mesh.position.distanceToSquared(this.player.mesh.position)
@@ -4095,9 +4493,19 @@
       }, 6500);
     }
 
+    updateHighScore() {
+      if (this.player && this.player.score > this.highScore) {
+        this.highScore = this.player.score;
+        try {
+          localStorage.setItem('skydominion_highscore', String(this.highScore));
+        } catch (e) {}
+      }
+    }
+
     handleAircraftDamage(victim, attacker, amount, weaponLabel) {
       if (!victim.alive) return;
       victim.hp -= amount;
+      if (attacker === this.player) this.updateHighScore();
       if (victim.hp <= 0) {
         this.destroyAircraft(victim, attacker, weaponLabel);
       }
@@ -4108,10 +4516,19 @@
       victim.alive = false;
       victim.hp = 0;
       victim.deaths++;
+      victim.lives = Math.max(0, victim.lives - 1);
       victim.mesh.visible = false;
 
+      // Release glowing gold Neon Orbs proportional to the dead pilot's score!
+      const droppedScore = victim.score;
+      this.world.spawnDeathLootOrbs(victim.mesh.position, droppedScore);
+
+      // Award kill points + bounty
       if (attacker && attacker !== victim) {
         attacker.kills++;
+        const bounty = Math.min(400, Math.round(droppedScore * 0.25));
+        attacker.score += 200 + bounty;
+        if (attacker === this.player) this.updateHighScore();
       }
 
       const distToCam = victim.mesh.position.distanceTo(this.camera.position);
@@ -4119,81 +4536,181 @@
       this.particles.spawnExplosion(victim.mesh.position, 1.35);
       this.particles.spawnFallingWreck(victim.mesh, victim.flight.velocity);
 
-      const feedClass = attacker ? (attacker.team === 'BLUE' ? 'kill-blue' : 'kill-red') : 'warn';
       if (attacker && attacker !== victim) {
-        this.addFeedItem(`${attacker.callsign} shot down ${victim.callsign} [${causeLabel}]`, feedClass);
+        this.addFeedItem(`${attacker.callsign} eliminated ${victim.callsign} [${causeLabel}] (${victim.lives}♥ left)`, attacker === this.player ? 'radio' : 'kill-blue');
       } else {
-        this.addFeedItem(`${victim.callsign} crashed into ${causeLabel}`, 'warn');
+        this.addFeedItem(`${victim.callsign} crashed into ${causeLabel} (${victim.lives}♥ left)`, 'warn');
       }
 
-      // If human player's current target died, auto-select next hostile
       if (this.player && this.player.target === victim) {
         this.cyclePlayerTarget();
       }
 
-      this.checkMatchStateAfterDeath(victim);
-    }
+      // Check if victim still has lives left or is out of all 3 lives
+      if (victim.lives > 0) {
+        victim.respawnTimer = 2.8;
+      } else {
+        victim.eliminated = true;
+        victim.respawnTimer = this.isArmageddon ? 999999 : 4.5;
+        this.addFeedItem(`${victim.callsign} lost all 3 lives!`, 'warn');
 
-    checkMatchStateAfterDeath(victim) {
-      const blueAlive = this.aircraftList.filter(a => a.alive && a.team === 'BLUE').length;
-      const redAlive = this.aircraftList.filter(a => a.alive && a.team === 'RED').length;
-
-      if (blueAlive === 0 || redAlive === 0) {
-        const playerWon = (this.player.team === 'BLUE' && blueAlive > 0) || (this.player.team === 'RED' && redAlive > 0);
-        this.endMatch(
-          playerWon ? 'VICTORY // AIR SUPERIORITY ACHIEVED' : 'DEFEAT // SQUADRON ELIMINATED',
-          `FINAL STANDING: TEAM BLUE ${blueAlive} ALIVE — TEAM RED ${redAlive} ALIVE`,
-          false
-        );
-        return;
+        if (victim === this.player && !this.isArmageddon) {
+          this.showPlayerRunEndedScreen();
+        }
       }
 
-      // If the player died but allies remain alive, show Results Screen WITH Respawn & Spectate options!
-      if (victim === this.player) {
-        const alliesAlive = this.aircraftList.filter(a => a.alive && a.team === this.player.team).length;
-        this.endMatch(
-          'AIRCRAFT DESTROYED // EJECTED',
-          alliesAlive > 0
-            ? `${alliesAlive} FRIENDLY WINGMEN STILL FIGHTING — RESPAWN OR SPECTATE`
-            : 'NO FRIENDLY AIRCRAFT REMAINING',
-          alliesAlive > 0
-        );
+      if (this.isArmageddon) {
+        this.checkArmageddonWinner();
       }
     }
 
-    respawnPlayerInWingman() {
-      const allies = this.aircraftList.filter(a => a.alive && a.team === this.player.team && !a.isPlayer);
+    updateRespawnsAndReplacements(dt) {
+      for (let i = 0; i < this.aircraftList.length; i++) {
+        const ac = this.aircraftList[i];
+        if (ac.alive) continue;
+
+        ac.respawnTimer -= dt;
+        if (ac.respawnTimer > 0) continue;
+
+        if (!ac.eliminated && ac.lives > 0) {
+          // Respawn pilot with remaining lives
+          const angle = Math.random() * Math.PI * 2;
+          const radius = 1700 + Math.random() * 1100;
+          const alt = ac.ai ? (ac.ai.personality.prefAltMin + 200) : 1050;
+          ac.spawnAt(Math.cos(angle) * radius, alt, Math.sin(angle) * radius, angle + Math.PI);
+          if (ac === this.player) {
+            this.cyclePlayerTarget();
+          }
+        } else if (ac.eliminated && !ac.isPlayer && !this.isArmageddon) {
+          // Normal hour: replace eliminated 0-life pilot with a new entrant joining the server
+          this.scene.remove(ac.mesh);
+          const newPilot = this.createUniqueBotPilot(i + Math.floor(Math.random() * 20));
+          this.aircraftList[i] = newPilot;
+          this.addFeedItem(`${newPilot.callsign} joined the arena`, 'kill-blue');
+        }
+      }
+    }
+
+    updateWorldClockAndArmageddon() {
+      // IST = UTC + 5:30 (19,800,000 ms)
+      const istMs = Date.now() + (5.5 * 3600 * 1000);
+      const istDate = new Date(istMs);
+      const h = istDate.getUTCHours();
+      const m = istDate.getUTCMinutes();
+      const s = istDate.getUTCSeconds();
+
+      const istClockStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      const secsToNextHour = (59 - m) * 60 + (60 - s);
+      const cdMin = String(Math.floor(secsToNextHour / 60)).padStart(2, '0');
+      const cdSec = String(secsToNextHour % 60).padStart(2, '0');
+
+      const hourKey = `${istDate.getUTCFullYear()}-${istDate.getUTCMonth()}-${istDate.getUTCDate()}-${h}`;
+
+      // Trigger Armageddon strictly at :00 IST (when minutes === 0 and not yet triggered for this hour)
+      if (m === 0 && this.lastTriggeredIstHourKey !== hourKey && (this.state === 'PLAYING' || this.state === 'SPECTATING')) {
+        this.lastTriggeredIstHourKey = hourKey;
+        this.triggerArmageddon();
+      }
+
+      const survivors = this.aircraftList.filter(a => !a.eliminated && a.lives > 0).length;
+      this.armageddonHudInfo = {
+        active: this.isArmageddon,
+        countdownStr: `${cdMin}:${cdSec}`,
+        istClockStr,
+        survivors
+      };
+
+      const lobbyEl = document.getElementById('lobby-server-status');
+      if (lobbyEl && this.state === 'MENU') {
+        lobbyEl.textContent = `● MUMBAI-FFA-04 // IST ${istClockStr} // ARMAGEDDON IN ${cdMin}:${cdSec}`;
+      }
+    }
+
+    triggerArmageddon() {
+      if (this.isArmageddon) return;
+      this.isArmageddon = true;
+      this.audio.playArmageddonSiren();
+      this.addFeedItem(`⚡ ARMAGEDDON BEGINS (:00 IST)! NO NEW JOINS — LAST SURVIVOR WINS! ⚡`, 'warn');
+      this.checkArmageddonWinner();
+    }
+
+    checkArmageddonWinner() {
+      if (!this.isArmageddon || this.state === 'CHAMPION_SHOWCASE') return;
+      const survivors = this.aircraftList.filter(a => !a.eliminated && a.lives > 0);
+
+      if (survivors.length <= 1) {
+        // Crown the sole survivor (or highest scorer if simultaneous mutual KO)
+        let winner = survivors[0];
+        if (!winner) {
+          const sorted = [...this.aircraftList].sort((a, b) => b.score - a.score);
+          winner = sorted[0];
+        }
+        this.startChampionShowcase(winner);
+      } else if (this.player && this.player.eliminated && this.state === 'PLAYING') {
+        // Player lost all 3 lives during Armageddon: automatically spectate remaining survivors
+        this.enterSpectateMode();
+      }
+    }
+
+    startChampionShowcase(winner) {
+      this.state = 'CHAMPION_SHOWCASE';
+      this.championPilot = winner;
+      this.championShowcaseTimer = 10.0; // 10 seconds mandatory showcase before Join New Server unlocks
+
+      if (winner && !winner.alive) {
+        winner.spawnAt(0, 1100, 0, 0);
+      }
+
+      document.getElementById('pause-screen').classList.add('hidden');
       document.getElementById('results-screen').classList.add('hidden');
       document.getElementById('spectate-bar').classList.add('hidden');
+      document.getElementById('touch-controls').classList.add('hidden');
 
-      if (allies.length > 0) {
-        // Take over a surviving friendly wingman aircraft seamlessly
-        const wingman = allies[0];
-        this.player.spawnAt(
-          wingman.mesh.position.x,
-          wingman.mesh.position.y,
-          wingman.mesh.position.z,
-          wingman.mesh.rotation.y
-        );
-        this.player.hp = wingman.hp;
-        // Despawn the bot slot we assumed command of so team count stays exact
-        wingman.alive = false;
-        wingman.mesh.visible = false;
-      } else {
-        // Fresh sortie respawn
-        const zSpawn = this.player.team === 'BLUE' ? 1600 : -1600;
-        const hdg = this.player.team === 'BLUE' ? 0 : Math.PI;
-        this.player.spawnAt(0, 1100, zSpawn, hdg);
+      const overlay = document.getElementById('champion-overlay');
+      overlay.classList.remove('hidden');
+      document.getElementById('champ-name').textContent = `${winner.callsign} (${winner.stats.shortName})`;
+      document.getElementById('champ-score').textContent = `FINAL SCORE: ${winner.score} PTS • ${winner.kills} KILLS`;
+      document.getElementById('btn-join-next-server').classList.add('hidden');
+    }
+
+    showPlayerRunEndedScreen() {
+      this.state = 'ENDED';
+      this.audio.updateEngine(0, 0, false);
+      this.updateHighScore();
+
+      document.getElementById('pause-screen').classList.add('hidden');
+      document.getElementById('spectate-bar').classList.add('hidden');
+      document.getElementById('touch-controls').classList.add('hidden');
+      const resScreen = document.getElementById('results-screen');
+      resScreen.classList.remove('hidden');
+
+      document.getElementById('result-headline').textContent = 'RUN TERMINATED // ALL 3 LIVES SPENT';
+      document.getElementById('result-subline').textContent = 'YOUR SCORE WAS RELEASED AS NEON LOOT ORBS IN THE ARENA';
+      document.getElementById('result-team-standing').textContent = `NEXT ARMAGEDDON IN ${this.armageddonHudInfo.countdownStr}`;
+
+      if (this.player) {
+        document.getElementById('res-score').textContent = this.player.score;
+        document.getElementById('res-best').textContent = this.highScore;
+        document.getElementById('res-kills').textContent = this.player.kills;
+        document.getElementById('res-deaths').textContent = this.player.deaths;
+        const acc = this.player.shotsFired > 0
+          ? Math.round((this.player.cannonHits / this.player.shotsFired) * 100)
+          : 0;
+        document.getElementById('res-accuracy').textContent = `${acc}%`;
       }
 
-      this.state = 'PLAYING';
-      this.cyclePlayerTarget();
-      this.addFeedItem(`${this.player.callsign} assumed lead of surviving wingman!`, 'radio');
+      const mins = String(Math.floor(this.elapsedSortieSec / 60)).padStart(2, '0');
+      const secs = String(Math.floor(this.elapsedSortieSec % 60)).padStart(2, '0');
+      document.getElementById('res-time').textContent = `${mins}:${secs}`;
+
+      this.populateScoreboard('results-table-body');
+      document.getElementById('btn-play-again').classList.toggle('hidden', this.isArmageddon);
     }
 
     enterSpectateMode() {
       document.getElementById('results-screen').classList.add('hidden');
       document.getElementById('spectate-bar').classList.remove('hidden');
+      document.getElementById('btn-spec-respawn').classList.toggle('hidden', this.isArmageddon);
       this.state = 'SPECTATING';
       this.cycleSpectateTarget();
     }
@@ -4204,82 +4721,34 @@
       const idx = aliveList.indexOf(this.spectateTarget);
       this.spectateTarget = aliveList[(idx + 1) % aliveList.length];
       document.getElementById('spectate-label').textContent =
-        `SPECTATING: ${this.spectateTarget.callsign} (${this.spectateTarget.stats.shortName})`;
+        `SPECTATING: ${this.spectateTarget.callsign} (${this.spectateTarget.score} PTS • ${this.spectateTarget.lives}♥)`;
     }
 
-    endMatch(headline, subline, canRespawn = false) {
-      this.state = 'ENDED';
-      this.audio.updateEngine(0, 0, false);
-
-      document.getElementById('pause-screen').classList.add('hidden');
-      document.getElementById('spectate-bar').classList.add('hidden');
-      document.getElementById('touch-controls').classList.add('hidden');
-      const resScreen = document.getElementById('results-screen');
-      resScreen.classList.remove('hidden');
-
-      document.getElementById('result-headline').textContent = headline;
-      document.getElementById('result-subline').textContent = subline;
-
-      const blueAlive = this.aircraftList.filter(a => a.alive && a.team === 'BLUE').length;
-      const redAlive = this.aircraftList.filter(a => a.alive && a.team === 'RED').length;
-      document.getElementById('result-team-standing').textContent = `BLUE ${blueAlive} — ${redAlive} RED`;
-
-      if (this.player) {
-        document.getElementById('res-kills').textContent = this.player.kills;
-        document.getElementById('res-deaths').textContent = this.player.deaths;
-        const acc = this.player.shotsFired > 0
-          ? Math.round((this.player.cannonHits / this.player.shotsFired) * 100)
-          : 0;
-        document.getElementById('res-accuracy').textContent = `${acc}%`;
-        document.getElementById('res-missiles').textContent = `${this.player.missilesHit} / ${this.player.missilesFired}`;
-      }
-
-      const mins = String(Math.floor(this.elapsedSortieSec / 60)).padStart(2, '0');
-      const secs = String(Math.floor(this.elapsedSortieSec % 60)).padStart(2, '0');
-      document.getElementById('res-time').textContent = `${mins}:${secs}`;
-
-      this.populateScoreboard('results-table-body', false);
-
-      document.getElementById('btn-respawn-now').classList.toggle('hidden', !canRespawn);
-      document.getElementById('btn-spectate-now').classList.toggle('hidden', !canRespawn);
-    }
-
-    populateScoreboard(tbodyId, includeAIState = true) {
+    populateScoreboard(tbodyId) {
       const tbody = document.getElementById(tbodyId);
       tbody.innerHTML = '';
 
-      const blueAlive = this.aircraftList.filter(a => a.alive && a.team === 'BLUE').length;
-      const redAlive = this.aircraftList.filter(a => a.alive && a.team === 'RED').length;
       const banner = document.getElementById('team-score-banner');
-      if (banner) banner.textContent = `BLUE ${blueAlive} ALIVE — RED ${redAlive} ALIVE`;
+      if (banner) banner.textContent = `PERSONAL BEST: ${this.highScore} PTS`;
 
-      for (const ac of this.aircraftList) {
+      const sorted = [...this.aircraftList].sort((a, b) => b.score - a.score);
+      sorted.forEach((ac, idx) => {
         const tr = document.createElement('tr');
-        tr.className = `${ac.team === 'BLUE' ? 'row-blue' : 'row-red'} ${ac.isPlayer ? 'row-player' : ''}`;
-        const stateStr = ac.isPlayer ? 'HUMAN LEAD' : (ac.ai ? `${ac.ai.state} (${ac.ai.maneuver})` : 'BOT');
-        if (includeAIState) {
-          tr.innerHTML = `
-            <td>${ac.callsign}</td>
-            <td>${ac.team}</td>
-            <td>${ac.stats.shortName}</td>
-            <td>${ac.alive ? stateStr : '--'}</td>
-            <td>${ac.alive ? Math.round(ac.hp) + '%' : '0%'}</td>
-            <td>${ac.kills}</td>
-            <td>${ac.deaths}</td>
-            <td class="${ac.alive ? 'status-alive' : 'status-down'}">${ac.alive ? 'ACTIVE' : 'SHOT DOWN'}</td>
-          `;
-        } else {
-          tr.innerHTML = `
-            <td>${ac.callsign}</td>
-            <td>${ac.team}</td>
-            <td>${ac.stats.shortName}</td>
-            <td>${ac.kills}</td>
-            <td>${ac.deaths}</td>
-            <td class="${ac.alive ? 'status-alive' : 'status-down'}">${ac.alive ? 'SURVIVED' : 'SHOT DOWN'}</td>
-          `;
-        }
+        tr.className = ac.isPlayer ? 'row-player' : 'row-blue';
+        const hearts = '♥'.repeat(Math.max(0, ac.lives)) + '♡'.repeat(Math.max(0, 3 - ac.lives));
+        const statusText = ac.eliminated ? 'OUT (0♥)' : (ac.alive ? 'IN FLIGHT' : 'RESPAWNING');
+        tr.innerHTML = `
+          <td>#${idx + 1}</td>
+          <td>${ac.callsign}${ac.isPlayer ? ' (YOU)' : ''}</td>
+          <td>${ac.stats.shortName}</td>
+          <td style="color:#fbbf24;font-weight:700;">${ac.score}</td>
+          <td>${ac.kills} / ${ac.deaths}</td>
+          <td style="color:#ff6b81;">${hearts}</td>
+          <td>${ac.ping}ms</td>
+          <td class="${!ac.eliminated ? 'status-alive' : 'status-down'}">${statusText}</td>
+        `;
         tbody.appendChild(tr);
-      }
+      });
     }
 
     updateCamera(dt, focusAc, snapImmediate = false) {
@@ -4287,12 +4756,11 @@
       const pos = focusAc.mesh.position;
       const quat = focusAc.mesh.quaternion;
 
-      // Hide own exterior mesh in Cockpit mode so polygons never clip camera
       for (const a of this.aircraftList) {
         a.hideMeshForCockpit = false;
       }
 
-      if (this.cameraMode === 'COCKPIT') {
+      if (this.cameraMode === 'COCKPIT' && this.state !== 'CHAMPION_SHOWCASE') {
         focusAc.hideMeshForCockpit = true;
         if (focusAc.mesh.userData.hiDetail) focusAc.mesh.userData.hiDetail.visible = false;
         if (focusAc.mesh.userData.abGroup) focusAc.mesh.userData.abGroup.visible = false;
@@ -4303,7 +4771,6 @@
         this.camera.fov = 68;
         this.camera.updateProjectionMatrix();
       } else {
-        // Chase Cam with smooth velocity lag and speed-based dynamic FOV
         if (focusAc.mesh.userData.hiDetail) focusAc.mesh.userData.hiDetail.visible = true;
 
         const speedRatio = Math.max(0, (focusAc.flight.speed - 120) / 230);
@@ -4329,7 +4796,6 @@
         this.camera.up.lerp(upVec, Math.min(1.0, 9.0 * dt));
         this.camera.lookAt(this.smoothCamLook);
 
-        // Dynamic FOV boost at high speed / afterburner
         const targetFov = 60 + speedRatio * 14 + (focusAc.flight.throttle > 0.78 ? 4 : 0);
         this.camera.fov += (targetFov - this.camera.fov) * Math.min(1.0, 6.0 * dt);
         this.camera.updateProjectionMatrix();
@@ -4352,7 +4818,8 @@
       const dt = Math.min(0.05, (now - this.lastTime) / 1000);
       this.lastTime = now;
 
-      // Global shortcuts (Mute M, Mouse Steer V, Pause P/Escape, Tab Scoreboard)
+      this.updateWorldClockAndArmageddon();
+
       if (this.input.consumePressed('KeyM')) this.toggleMute();
       if (this.input.consumePressed('KeyV')) this.toggleMouseSteer();
       if (this.input.consumePressed('KeyP') || this.input.consumePressed('Escape')) {
@@ -4362,7 +4829,6 @@
       }
 
       if (this.state === 'MENU') {
-        // Orbit camera around showcase fighter on Start Screen
         const t = now * 0.00045;
         if (this.menuFighter) {
           this.menuFighter.rotation.z = Math.sin(t * 2.2) * 0.28;
@@ -4380,11 +4846,35 @@
         return;
       }
 
+      if (this.state === 'CHAMPION_SHOWCASE') {
+        this.championShowcaseTimer -= dt;
+        const timerEl = document.getElementById('champ-timer');
+        const joinBtn = document.getElementById('btn-join-next-server');
+        if (this.championShowcaseTimer > 0) {
+          if (timerEl) timerEl.textContent = `Next Server Ready in ${Math.ceil(this.championShowcaseTimer)}s...`;
+        } else {
+          if (timerEl) timerEl.textContent = `Server victory recorded! You may now join a new server.`;
+          if (joinBtn) joinBtn.classList.remove('hidden');
+        }
+
+        if (this.championPilot && this.championPilot.alive) {
+          this.championPilot.update(dt, { pitch: 0.05, roll: 0.18, yaw: 0, throttleDelta: 0 }, this.weapons, this.particles, this.camera.position);
+          const t = now * 0.0008;
+          const cPos = this.championPilot.mesh.position;
+          this.camera.position.set(cPos.x + Math.cos(t) * 26, cPos.y + 6, cPos.z + Math.sin(t) * 26);
+          this.camera.up.set(0, 1, 0);
+          this.camera.lookAt(cPos);
+        }
+        this.particles.update(dt, this.world);
+        this.world.update(this.camera.position);
+        this.renderer.render(this.scene, this.camera);
+        return;
+      }
+
       if (this.state === 'PAUSED') {
         if (this.input.consumePressed('Tab')) {
           this.setPaused(false);
         } else if (this.tabPressTime && !this.input.keys['Tab'] && (now - this.tabPressTime > 260)) {
-          // Released Tab after holding it to view the scoreboard
           this.tabPressTime = 0;
           this.setPaused(false);
         }
@@ -4395,14 +4885,14 @@
       if (this.state === 'PLAYING' || this.state === 'SPECTATING') {
         this.elapsedSortieSec += dt;
 
-        // Tab key: tap to toggle Pause/Scoreboard, or hold to peek Scoreboard
         if (this.input.consumePressed('Tab')) {
           this.tabPressTime = now;
           this.setPaused(true);
           return;
         }
 
-        // 1. Update Human Player or Spectate Camera
+        this.updateRespawnsAndReplacements(dt);
+
         const playerControls = this.input.getFlightControls(this.player, this.camera);
         if (playerControls.toggleCam) this.toggleCamera();
 
@@ -4415,21 +4905,19 @@
           }
         }
 
-        // 2. Update All AI Bots
+        // Update all other FFA pilots
         for (const ac of this.aircraftList) {
           if (!ac.alive || ac.isPlayer) continue;
           const aiControls = ac.ai.update(
             dt,
             this.aircraftList,
             this.weapons.missiles,
-            this.world,
-            this.player,
-            (msg, type) => this.addFeedItem(msg, type)
+            this.world
           );
           ac.update(dt, aiControls, this.weapons, this.particles, this.camera.position);
         }
 
-        // 3. Check Ground / Ocean & Mid-Air Collisions for All Active Aircraft
+        // Check Ground / Ocean Collisions
         for (const ac of this.aircraftList) {
           if (!ac.alive) continue;
           const pos = ac.mesh.position;
@@ -4440,38 +4928,50 @@
           }
         }
 
-        // 4. Update Weapons & Particles
+        // Update Falling Neon Orbs, Weapons & Particles
+        this.world.updateOrbs(dt, this.aircraftList, this.particles, this.audio, (collector, orb) => {
+          if (collector === this.player) {
+            this.updateHighScore();
+            this.addFeedItem(`Collected Neon Orb (+${orb.scoreVal} PTS, +${orb.healVal} HP)`, 'radio');
+          }
+        });
         this.weapons.update(dt, this.aircraftList, this.world, (victim, attacker, dmg, label) => {
           this.handleAircraftDamage(victim, attacker, dmg, label);
         });
         this.particles.update(dt, this.world);
 
-        // 5. Update Camera, World & HUD
         const activeFocus = (this.state === 'SPECTATING' && this.spectateTarget && this.spectateTarget.alive)
           ? this.spectateTarget
           : this.player;
 
-        if (activeFocus && activeFocus.alive) {
-          this.updateCamera(dt, activeFocus, false);
+        if (activeFocus) {
+          if (activeFocus.alive) {
+            this.updateCamera(dt, activeFocus, false);
+          }
           const threatLevel = this.hud.render(
             activeFocus,
             this.aircraftList,
             this.weapons.missiles,
+            this.world.orbs,
             this.camera,
             this.state === 'SPECTATING',
             this.cameraMode,
-            this.input
+            this.input,
+            this.armageddonHudInfo,
+            this.highScore
           );
-          const speedRatio = activeFocus.flight.speed / activeFocus.stats.maxSpeed;
-          this.audio.updateEngine(activeFocus.flight.throttle, speedRatio, true);
-          this.audio.updateLockAndWarningTones(
-            activeFocus.lockState.progress,
-            activeFocus.lockState.isLocked,
-            threatLevel,
-            this.elapsedSortieSec
-          );
-        } else {
-          this.audio.updateEngine(0, 0, false);
+          if (activeFocus.alive) {
+            const speedRatio = activeFocus.flight.speed / activeFocus.stats.maxSpeed;
+            this.audio.updateEngine(activeFocus.flight.throttle, speedRatio, true);
+            this.audio.updateLockAndWarningTones(
+              activeFocus.lockState.progress,
+              activeFocus.lockState.isLocked,
+              threatLevel,
+              this.elapsedSortieSec
+            );
+          } else {
+            this.audio.updateEngine(0, 0, false);
+          }
         }
 
         this.world.update(this.camera.position);
@@ -4481,7 +4981,6 @@
     }
   }
 
-  // Boot simulator once DOM and Three.js are ready
   window.addEventListener('load', () => {
     try {
       window.airCombatSim = new Game();
